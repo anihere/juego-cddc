@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CDDC - Sky Edition: Agencia Principium.cima</title>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Impact', sans-serif; }
+        #game-container { position: relative; width: 1000px; height: 500px; border: 4px solid gold; background: #000; overflow: hidden; }
+        canvas { display: block; image-rendering: pixelated; }
+
+        .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
+        .char-grid { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .char-card { border: 2px solid #444; padding: 8px; cursor: pointer; background: #000; width: 125px; border-radius: 8px; transition: 0.2s; }
+        .char-card:hover { border-color: gold; transform: scale(1.05); }
+        .char-card img { width: 90px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
+        .sign-tag { font-size: 1.1em; color: #fff; margin-top: 5px; }
+        
+        .hud { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 1px solid gold; visibility: hidden; }
+        .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
+        .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
+        .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
+        button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="1000" height="500"></canvas>
+    
+    <div id="intro-screen" class="screen">
+        <h1 style="font-size: 3.5em; margin: 0; text-shadow: 3px 3px #000; color: gold;">CIMA DE DUROS CAMPEONES</h1>
+        <div class="char-grid">
+            <div class="char-card"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
+            <div class="char-card"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
+            <div class="char-card"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
+            <div class="char-card"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
+            <div class="char-card"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
+        </div>
+        <button onclick="showSelect()">ENTRAR AL BARRIO</button>
+    </div>
+
+    <div id="select-screen" class="screen" style="display:none;">
+        <h2 style="font-size: 2em;">ELIJE TU GUERRERO</h2>
+        <div class="char-grid">
+            <div class="char-card" onclick="startGame('NEA', 'nea.jpg', '♍', '#fff', '#4b2e1e', 'bowl')"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
+            <div class="char-card" onclick="startGame('ANIBAL', 'anibal.jpg', '♍', '#f00', '#222', 'fade')"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
+            <div class="char-card" onclick="startGame('MARCOS', 'marcos.jpg', '♎', '#0f0', '#000', 'spiky')"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
+            <div class="char-card" onclick="startGame('SEBA', 'seba.jpg', '♍', '#00f', '#5e3a24', 'short')"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
+            <div class="char-card" onclick="startGame('LEON', 'leon.jpg', '♈', '#ffa500', '#8b4513', 'fade')"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
+        </div>
+    </div>
+
+    <div id="hud" class="hud">
+        <img id="hud-face" class="hud-img" src="">
+        <div>
+            <div id="hud-name" style="color: gold; font-size: 1.1em;">-</div>
+            <div class="hp-bar-bg"><div id="hp-fill" class="hp-bar-fill"></div></div>
+            <div style="color:#fff; font-size: 0.8em;">RECAUDADO: <span id="score-text" style="color:gold">$0</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const imgDo = new Image(); imgDo.src = 'do.jpg';
+const imgFa = new Image(); imgFa.src = 'fa.jpg';
+const imgRe = new Image(); imgRe.src = 're.jpg';
+const imgSol = new Image(); imgSol.src = 'sol.jpg';
+const flyers = [imgFa, imgDo, imgRe];
+
+// MÚSICA TIPO.MP3
+const bgMusic = new Audio('tipo.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.5;
+
+let active = false, score = 0, bgX = 0, frame = 0, keys = {};
+let timeCycle = 0, rainTimer = 0;
+
+const stars = Array.from({length: 40}, () => ({x: Math.random()*1000, y: Math.random()*200, sz: Math.random()*2}));
+const clouds = Array.from({length: 6}, () => ({x: Math.random()*1000, y: 40 + Math.random()*50, spd: 0.3 + Math.random()*0.4}));
+const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Math.random()*500, s: 15 + Math.random()*10}));
+
+const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
+const enemy = { x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short' };
+
+// AGUA PARA RECUPERAR SALUD
+const items = [];
+function spawnWater() {
+    items.push({ x: bgX + 1100, y: 380 + Math.random()*80, active: true });
+}
+
+function showSelect() {
+    // Inicia música al entrar
+    bgMusic.play().catch(e => console.log("Esperando clic para música"));
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('select-screen').style.display = 'flex';
+}
+
+function startGame(name, img, signo, color, hColor, hStyle) {
+    player.name = name; player.color = color; player.sign = signo;
+    player.hairColor = hColor; player.hairStyle = hStyle;
+    document.getElementById('hud-face').src = img;
+    document.getElementById('hud-name').innerText = name + " " + signo;
+    document.getElementById('select-screen').style.display = 'none';
+    document.getElementById('hud').style.visibility = 'visible';
+    active = true; loop();
+}
+
+function drawSky() {
+    timeCycle += 0.002; 
+    let dayIntensity = (Math.sin(timeCycle) + 1) / 2; 
+    let r = Math.floor(10 + dayIntensity * 40);
+    let g = Math.floor(15 + dayIntensity * 100);
+    let b = Math.floor(30 + dayIntensity * 200);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0,0,1000,350);
+
+    if(dayIntensity > 0.5) {
+        let sAlpha = (dayIntensity - 0.5) * 2;
+        ctx.fillStyle = `rgba(255, 255, 0, ${sAlpha})`;
+        ctx.beginPath(); ctx.arc(150, 80, 40, 0, Math.PI*2); ctx.fill();
+        clouds.forEach(c => {
+            c.x += c.spd; if(c.x > 1050) c.x = -100;
+            ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha * 0.6})`;
+            ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.arc(c.x+20, c.y-5, 18, 0, Math.PI*2); ctx.arc(c.x+40, c.y, 15, 0, Math.PI*2); ctx.fill();
+        });
+    }
+
+    if(dayIntensity < 0.5) {
+        let nAlpha = (0.5 - dayIntensity) * 2;
+        ctx.fillStyle = `rgba(255,255,255,${nAlpha})`;
+        stars.forEach(s => ctx.fillRect(s.x, s.y, s.sz, s.sz));
+        ctx.fillStyle = `rgba(255, 255, 240, ${nAlpha})`;
+        ctx.beginPath(); ctx.arc(850, 70, 25, 0, Math.PI*2); ctx.fill();
+    }
+
+    if(rainTimer > 0) {
+        ctx.strokeStyle = "rgba(174, 194, 224, 0.6)";
+        ctx.lineWidth = 1;
+        rainDrops.forEach(d => {
+            d.y += d.s; if(d.y > 500) { d.y = -20; d.x = Math.random()*1000; }
+            ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x, d.y + d.s); ctx.stroke();
+        });
+        rainTimer--;
+    }
+}
+
+function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairStyle) {
+    ctx.save();
+    ctx.translate(x, y);
+    const swing = Math.sin(frame * 0.15) * 10;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#fff";
+    let flip = (isPlayer && dir === -1) ? -1 : 1;
+
+    ctx.beginPath();
+    let legLX1 = -10 * flip;
+    let legLX2 = (-15 * flip) - (isPlayer ? swing * flip : 0);
+    ctx.moveTo(legLX1, -30); ctx.lineTo(legLX2, -5); 
+    let legRX1 = 10 * flip;
+    let legRX2 = (15 * flip) + (isPlayer ? swing * flip : 0);
+    ctx.moveTo(legRX1, -30); ctx.lineTo(legRX2, -5); 
+    ctx.stroke();
+    
+    ctx.fillStyle = "#fff";
+    let shoeLX = flip === 1 ? legLX2 : legLX2 - 12;
+    ctx.fillRect(shoeLX, -5, 12, 6);
+    let shoeRX = flip === 1 ? legRX2 : legRX2 - 12;
+    ctx.fillRect(shoeRX, -5, 12, 6);
+
+    ctx.beginPath();
+    if(isPlayer && atk) {
+        ctx.moveTo(25 * flip, -75); ctx.lineTo(40 * flip, -115); 
+        ctx.moveTo(-30 * flip, -75); ctx.lineTo(-45 * flip, -50 + swing);
+    } else {
+        ctx.moveTo(-30 * flip, -75); ctx.lineTo(-45 * flip, -50 + swing);
+        ctx.moveTo(30 * flip, -75); ctx.lineTo(45 * flip, -50 - swing);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = hit > 0 ? "white" : color;
+    ctx.fillRect(-30, -110, 60, 80);
+    
+    if(isPlayer) {
+        ctx.fillStyle = "black"; ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
+        ctx.fillText(player.name, 0, -85);
+        ctx.font = "bold 16px Arial"; ctx.fillText(player.sign, 0, -65);
+    } else {
+        ctx.fillStyle = "black"; ctx.font = "bold 30px Impact";
+        ctx.textAlign = "center"; ctx.fillText(type, 0, -55);
+    }
+
+    ctx.fillStyle = "#ffccaa";
+    if(isPlayer) { ctx.fillRect(-20, -140, 40, 30); ctx.strokeRect(-20, -140, 40, 30); }
+    else { ctx.beginPath(); ctx.arc(0, -125, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
+
+    if(hairStyle !== 'none') {
+        ctx.fillStyle = hairColor;
+        if(hairStyle === 'fade') ctx.fillRect(-20, -150, 40, 15);
+        else if(hairStyle === 'short') { ctx.beginPath(); ctx.arc(0, -140, 22, Math.PI, 0); ctx.fill(); }
+        else if(hairStyle === 'spiky') { ctx.beginPath(); ctx.moveTo(-20, -140); ctx.lineTo(-10, -155); ctx.lineTo(0, -140); ctx.lineTo(10, -155); ctx.lineTo(20, -140); ctx.fill(); }
+        else if(hairStyle === 'bowl') { ctx.fillRect(-22, -145, 44, 12); ctx.fillRect(-22, -145, 10, 20); ctx.fillRect(12, -145, 10, 20); }
+    }
+
+    ctx.fillStyle = "black";
+    let eyeX = (isPlayer && dir === 1) ? 5 : -15;
+    if(hit > 0) { ctx.font = "bold 15px Arial"; ctx.fillText("x x", 0, -125); }
+    else { ctx.fillRect(eyeX, -132, 4, 4); ctx.fillRect(eyeX + 10, -132, 4, 4); ctx.beginPath(); ctx.moveTo(eyeX - 2, -120); ctx.lineTo(eyeX + 12, -120); ctx.stroke(); }
+
+    if(isPlayer && atk) { ctx.fillStyle = "gold"; ctx.fillRect(35 * flip - (flip === -1 ? 18 : 0), -125, 18, 18); }
+    ctx.restore();
+}
+
+function loop() {
+    if(!active) return;
+    frame++;
+
+    if(keys['ArrowRight']) { if(player.x < 500) player.x += player.spd; else bgX += player.spd; player.dir = 1; }
+    if(keys['ArrowLeft']) { if(player.x > 50) player.x -= player.spd; player.dir = -1; }
+    if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
+    if(keys['ArrowDown'] && player.y < 480) player.y += 5;
+
+    // VERIFICACIÓN DE AGUA AL 50%
+    if(player.hp <= 50 && items.length === 0) spawnWater();
+
+    let ex = enemy.x - bgX;
+    if(Math.abs(player.x - ex) < 60 && Math.abs(player.y - enemy.y) < 30) {
+        if(Math.random() < 0.05) player.hp -= 1;
+    } else { enemy.x -= enemy.spd; }
+
+    if(enemy.hp <= 0 || ex < -200) {
+        if(enemy.hp <= 0) score += 500;
+        enemy.hp = 50; enemy.x = bgX + 1100; enemy.y = 350 + Math.random()*120;
+        let r = Math.random();
+        if (r < 0.60) { enemy.type = '$'; enemy.color = 'gold'; enemy.hairStyle = 'short'; enemy.hairColor = '#4b2e1e'; }
+        else if (r < 0.90) { enemy.type = '₿'; enemy.color = '#f7931a'; enemy.hairStyle = 'fade'; enemy.hairColor = '#000'; }
+        else { enemy.type = '💧'; enemy.color = '#00ffff'; enemy.hairStyle = 'none'; }
+    }
+
+    ctx.clearRect(0,0,1000,500);
+    drawSky();
+
+    // DISEÑO DE PAREDES ORIGINAL
+    for(let i=0; i<12; i++) {
+        let x = (i * 400) - (bgX * 0.8 % 4800);
+        if (i % 4 === 3) { 
+            ctx.fillStyle = "#222"; ctx.fillRect(x, 50, 398, 300); 
+            ctx.fillStyle = "#444"; ctx.fillRect(x + 50, 150, 300, 200); 
+            ctx.strokeStyle = "#333"; ctx.lineWidth = 2;
+            for(let py=0; py<10; py++) { ctx.beginPath(); ctx.moveTo(x+50, 150+py*20); ctx.lineTo(x+350, 150+py*20); ctx.stroke(); }
+            if(imgSol.complete) ctx.drawImage(imgSol, x + 125, 180, 150, 140);
+            ctx.font = "20px 'Impact'"; ctx.textAlign = "center"; ctx.fillStyle = "gold";
+            ctx.fillText("CIMA DE DUROS CAMPEONES", x + 200, 130);
+        } else {
+            ctx.fillStyle = "#3d1a1a"; ctx.fillRect(x, 180, 395, 170);
+            ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1;
+            for(let ly=0; ly<8; ly++) { ctx.beginPath(); ctx.moveTo(x, 180+ly*21.5); ctx.lineTo(x+395, 180+ly*21.5); ctx.stroke(); }
+            ctx.font = "30px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,255,255,0.25)";
+            if(i%3==0) ctx.fillText("†", x + 50, 220);
+            if(i%3==1) ctx.fillText("ﷲ", x + 50, 220);
+            if(i%3==2) { ctx.fillText("†", x + 40, 220); ctx.fillText("ﷲ", x + 70, 220); }
+            ctx.font = "22px 'Permanent Marker'"; ctx.fillStyle = i%2==0 ? "#00ff00" : "#ff00ff";
+            if(i%3==0) ctx.fillText("Subte Medalla Milagrosa E", x + 200, 330);
+            if(i%3==1) ctx.fillText("Parque Chacabuco", x + 200, 330);
+            if(i%3==2) ctx.fillText("Lautaro abajo del puente", x + 200, 330);
+            if(flyers[i % 3].complete) ctx.drawImage(flyers[i % 3], x + 140, 200, 110, 100);
+            ctx.font = "14px 'Impact'"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(212, 175, 55, 0.5)";
+            ctx.fillText("Agencia Principium.cima", x + 200, 345);
+        }
+    }
+    
+    ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
+
+    // DIBUJAR ITEMS DE AGUA
+    items.forEach((it, index) => {
+        if(!it.active) return;
+        let ix = it.x - bgX;
+        ctx.fillStyle = "cyan"; ctx.fillRect(ix, it.y, 10, 20);
+        ctx.fillStyle = "white"; ctx.fillRect(ix, it.y, 10, 5);
+        if(Math.abs(player.x - ix) < 40 && Math.abs(player.y - it.y) < 40) {
+            player.hp = Math.min(100, player.hp + 30);
+            it.active = false;
+            items.splice(index, 1);
+        }
+    });
+
+    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, -1, enemy.hairColor, enemy.hairStyle);
+    drawHuman(player.x, player.y, player.color, true, 0, '', player.atk, player.dir, player.hairColor, player.hairStyle);
+
+    document.getElementById('hp-fill').style.width = player.hp + "%";
+    document.getElementById('score-text').innerText = "$" + score;
+    if(player.hp <= 0) location.reload();
+    if(enemy.hit > 0) enemy.hit--;
+
+    requestAnimationFrame(loop);
+}
+
+window.onkeydown = (e) => {
+    keys[e.key] = true;
+    if(e.key.toLowerCase() === 'z' && !player.atk) {
+        player.atk = true;
+        let ex = enemy.x - bgX;
+        if(Math.abs(player.x - ex) < 100 && Math.abs(player.y - enemy.y) < 55) { 
+            enemy.hp -= player.pwr; enemy.hit = 10; 
+            if(enemy.type === '💧') rainTimer = 220;
+        }
+        setTimeout(() => player.atk = false, 180);
+    }
+};
+window.onkeyup = (e) => keys[e.key] = false;
+</script>
+</body>
+</html>

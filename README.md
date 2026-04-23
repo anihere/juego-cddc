@@ -39,8 +39,8 @@ El juego es intuitivo y rápido:
 **Cima De Duros Campeones** es más que un juego; es un movimiento de deportes de combate en Argentina. 
 Organizado por la **Agencia Principium.cima**.
 
-* **Promotor:** Profesor Ezequiel.
-* **Contacto para Reclutamiento:** 1134530872 / 1173692165.
+* **Promotor:** Profesor IA.
+* **Contacto para Reclutamiento:** 1173692165.
 
 ---
 *Desarrollado con pasión por el combate y el diseño.*

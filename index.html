@@ -16,6 +16,10 @@
         .char-card img { width: 90px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
         .sign-tag { font-size: 1.1em; color: #fff; margin-top: 5px; }
         
+        /* ESTILO DEL TUTORIAL */
+        #tutorial-screen { background: rgba(0,0,0,0.9); border: 2px solid gold; }
+        .key-hint { background: #333; color: gold; padding: 5px 10px; border-radius: 5px; border: 1px solid #777; font-family: monospace; }
+
         .hud { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 1px solid gold; visibility: hidden; }
         .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
         .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
@@ -43,12 +47,22 @@
     <div id="select-screen" class="screen" style="display:none;">
         <h2 style="font-size: 2em;">ELIJE TU GUERRERO</h2>
         <div class="char-grid">
-            <div class="char-card" onclick="startGame('NEA', 'nea.jpg', '♍', '#fff', '#4b2e1e', 'bowl')"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
-            <div class="char-card" onclick="startGame('ANIBAL', 'anibal.jpg', '♍', '#f00', '#222', 'fade')"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
-            <div class="char-card" onclick="startGame('MARCOS', 'marcos.jpg', '♎', '#0f0', '#000', 'spiky')"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
-            <div class="char-card" onclick="startGame('SEBA', 'seba.jpg', '♍', '#00f', '#5e3a24', 'short')"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
-            <div class="char-card" onclick="startGame('LEON', 'leon.jpg', '♈', '#ffa500', '#8b4513', 'fade')"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
+            <div class="char-card" onclick="showTutorial('NEA', 'nea.jpg', '♍', '#fff', '#4b2e1e', 'bowl')"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
+            <div class="char-card" onclick="showTutorial('ANIBAL', 'anibal.jpg', '♍', '#f00', '#222', 'fade')"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
+            <div class="char-card" onclick="showTutorial('MARCOS', 'marcos.jpg', '♎', '#0f0', '#000', 'spiky')"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
+            <div class="char-card" onclick="showTutorial('SEBA', 'seba.jpg', '♍', '#00f', '#5e3a24', 'short')"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
+            <div class="char-card" onclick="showTutorial('LEON', 'leon.jpg', '♈', '#ffa500', '#8b4513', 'fade')"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
         </div>
+    </div>
+
+    <div id="tutorial-screen" class="screen" style="display:none;">
+        <h2 style="font-size: 2.5em; color: gold;">¿ESTÁS LISTO?</h2>
+        <div style="font-size: 1.5em; line-height: 1.8; color: #fff; max-width: 600px;">
+            <p>MUEVETE CON LAS <span class="key-hint">FLECHAS</span> DEL TECLADO</p>
+            <p>PEGA UN PIÑAZO CON LA TECLA <span class="key-hint">Z</span></p>
+            <p style="font-size: 0.8em; color: gold; margin-top: 30px;">RECAUDA DINERO Y NO DEJES QUE TE BAJEN</p>
+        </div>
+        <button onclick="startGame()">¡A LA CALLE!</button>
     </div>
 
     <div id="hud" class="hud">
@@ -71,7 +85,6 @@ const imgRe = new Image(); imgRe.src = 're.jpg';
 const imgSol = new Image(); imgSol.src = 'sol.jpg';
 const flyers = [imgFa, imgDo, imgRe];
 
-// MÚSICA TIPO.MP3
 const bgMusic = new Audio('tipo.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5;
@@ -86,25 +99,31 @@ const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Ma
 const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
 const enemy = { x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short' };
 
-// AGUA PARA RECUPERAR SALUD
 const items = [];
 function spawnWater() {
     items.push({ x: bgX + 1100, y: 380 + Math.random()*80, active: true });
 }
 
 function showSelect() {
-    // Inicia música al entrar
     bgMusic.play().catch(e => console.log("Esperando clic para música"));
     document.getElementById('intro-screen').style.display = 'none';
     document.getElementById('select-screen').style.display = 'flex';
 }
 
-function startGame(name, img, signo, color, hColor, hStyle) {
+// NUEVA FUNCIÓN PARA MOSTRAR INSTRUCCIONES
+function showTutorial(name, img, signo, color, hColor, hStyle) {
+    // Guardamos los datos del personaje temporalmente
     player.name = name; player.color = color; player.sign = signo;
     player.hairColor = hColor; player.hairStyle = hStyle;
     document.getElementById('hud-face').src = img;
     document.getElementById('hud-name').innerText = name + " " + signo;
+    
     document.getElementById('select-screen').style.display = 'none';
+    document.getElementById('tutorial-screen').style.display = 'flex';
+}
+
+function startGame() {
+    document.getElementById('tutorial-screen').style.display = 'none';
     document.getElementById('hud').style.visibility = 'visible';
     active = true; loop();
 }
@@ -223,7 +242,6 @@ function loop() {
     if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
     if(keys['ArrowDown'] && player.y < 480) player.y += 5;
 
-    // VERIFICACIÓN DE AGUA AL 50%
     if(player.hp <= 50 && items.length === 0) spawnWater();
 
     let ex = enemy.x - bgX;
@@ -243,7 +261,6 @@ function loop() {
     ctx.clearRect(0,0,1000,500);
     drawSky();
 
-    // DISEÑO DE PAREDES ORIGINAL
     for(let i=0; i<12; i++) {
         let x = (i * 400) - (bgX * 0.8 % 4800);
         if (i % 4 === 3) { 
@@ -274,7 +291,6 @@ function loop() {
     
     ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
 
-    // DIBUJAR ITEMS DE AGUA
     items.forEach((it, index) => {
         if(!it.active) return;
         let ix = it.x - bgX;
@@ -299,6 +315,12 @@ function loop() {
 }
 
 window.onkeydown = (e) => {
+    // Si el tutorial está visible, cualquier tecla inicia el juego
+    if(document.getElementById('tutorial-screen').style.display === 'flex') {
+        startGame();
+        return;
+    }
+
     keys[e.key] = true;
     if(e.key.toLowerCase() === 'z' && !player.atk) {
         player.atk = true;

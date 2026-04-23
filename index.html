@@ -9,14 +9,16 @@
         #game-container { position: relative; width: 1000px; height: 500px; border: 4px solid gold; background: #000; overflow: hidden; }
         canvas { display: block; image-rendering: pixelated; }
 
-        .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
-        .char-grid { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-        .char-card { border: 2px solid #444; padding: 8px; cursor: pointer; background: #000; width: 125px; border-radius: 8px; transition: 0.2s; }
-        .char-card:hover { border-color: gold; transform: scale(1.05); }
-        .char-card img { width: 90px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
-        .sign-tag { font-size: 1.1em; color: #fff; margin-top: 5px; }
+        .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; padding: 20px; }
         
-        /* ESTILO DEL TUTORIAL */
+        /* Ajuste de la cuadrícula para que entren todos */
+        .char-grid { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+        
+        .char-card { border: 2px solid #444; padding: 6px; cursor: pointer; background: #000; width: 110px; border-radius: 8px; transition: 0.2s; }
+        .char-card:hover { border-color: gold; transform: scale(1.05); }
+        .char-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
+        .sign-tag { font-size: 1em; color: #fff; margin-top: 5px; white-space: nowrap; }
+        
         #tutorial-screen { background: rgba(0,0,0,0.9); border: 2px solid gold; }
         .key-hint { background: #333; color: gold; padding: 5px 10px; border-radius: 5px; border: 1px solid #777; font-family: monospace; }
 
@@ -24,7 +26,8 @@
         .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
         .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
         .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
-        button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; }
+        button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; box-shadow: 0 4px 0 #b8860b; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8860b; }
     </style>
 </head>
 <body>
@@ -33,8 +36,10 @@
     <canvas id="gameCanvas" width="1000" height="500"></canvas>
     
     <div id="intro-screen" class="screen">
-        <h1 style="font-size: 3.5em; margin: 0; text-shadow: 3px 3px #000; color: gold;">CIMA DE DUROS CAMPEONES</h1>
+        <h1 style="font-size: 3em; margin: 0; text-shadow: 3px 3px #000; color: gold;">CIMA DE DUROS CAMPEONES</h1>
+        <p style="color: #fff; margin: 5px 0;">AGENCIA PRINCIPIUM.CIMA</p>
         <div class="char-grid">
+            <div class="char-card"><img src="ezequiel.jpg"><div class="sign-tag">EZEQUIEL ♏</div></div>
             <div class="char-card"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
             <div class="char-card"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
             <div class="char-card"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
@@ -45,8 +50,9 @@
     </div>
 
     <div id="select-screen" class="screen" style="display:none;">
-        <h2 style="font-size: 2em;">ELIJE TU GUERRERO</h2>
+        <h2 style="font-size: 2em; margin-bottom: 10px;">ELIJE TU GUERRERO</h2>
         <div class="char-grid">
+            <div class="char-card" onclick="showTutorial('EZEQUIEL', 'ezequiel.jpg', '♏', '#111', '#000', 'fade')"><img src="ezequiel.jpg"><div class="sign-tag">EZEQUIEL ♏</div></div>
             <div class="char-card" onclick="showTutorial('NEA', 'nea.jpg', '♍', '#fff', '#4b2e1e', 'bowl')"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
             <div class="char-card" onclick="showTutorial('ANIBAL', 'anibal.jpg', '♍', '#f00', '#222', 'fade')"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
             <div class="char-card" onclick="showTutorial('MARCOS', 'marcos.jpg', '♎', '#0f0', '#000', 'spiky')"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
@@ -76,6 +82,7 @@
 </div>
 
 <script>
+// (El resto del código JavaScript permanece igual para mantener la lógica del juego)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -105,19 +112,16 @@ function spawnWater() {
 }
 
 function showSelect() {
-    bgMusic.play().catch(e => console.log("Esperando clic para música"));
+    bgMusic.play().catch(e => console.log("Música en espera"));
     document.getElementById('intro-screen').style.display = 'none';
     document.getElementById('select-screen').style.display = 'flex';
 }
 
-// NUEVA FUNCIÓN PARA MOSTRAR INSTRUCCIONES
 function showTutorial(name, img, signo, color, hColor, hStyle) {
-    // Guardamos los datos del personaje temporalmente
     player.name = name; player.color = color; player.sign = signo;
     player.hairColor = hColor; player.hairStyle = hStyle;
     document.getElementById('hud-face').src = img;
     document.getElementById('hud-name').innerText = name + " " + signo;
-    
     document.getElementById('select-screen').style.display = 'none';
     document.getElementById('tutorial-screen').style.display = 'flex';
 }
@@ -204,7 +208,8 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
     ctx.fillRect(-30, -110, 60, 80);
     
     if(isPlayer) {
-        ctx.fillStyle = "black"; ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
+        ctx.fillStyle = (color === "#111" || color === "#000") ? "gold" : "black"; 
+        ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
         ctx.fillText(player.name, 0, -85);
         ctx.font = "bold 16px Arial"; ctx.fillText(player.sign, 0, -65);
     } else {
@@ -315,12 +320,10 @@ function loop() {
 }
 
 window.onkeydown = (e) => {
-    // Si el tutorial está visible, cualquier tecla inicia el juego
     if(document.getElementById('tutorial-screen').style.display === 'flex') {
         startGame();
         return;
     }
-
     keys[e.key] = true;
     if(e.key.toLowerCase() === 'z' && !player.atk) {
         player.atk = true;

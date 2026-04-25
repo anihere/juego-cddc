@@ -3,74 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>CDDC: Agencia Principium.cima</title>
-    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
         body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Impact', sans-serif; }
         #game-container { position: relative; width: 1000px; height: 500px; border: 4px solid gold; background: #000; overflow: hidden; }
         canvas { display: block; image-rendering: pixelated; }
-
         .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; padding: 20px; }
-        
-        /* Ajuste de la cuadrícula para que entren todos */
         .char-grid { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
-        
         .char-card { border: 2px solid #444; padding: 6px; cursor: pointer; background: #000; width: 110px; border-radius: 8px; transition: 0.2s; }
         .char-card:hover { border-color: gold; transform: scale(1.05); }
         .char-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
-        .sign-tag { font-size: 1em; color: #fff; margin-top: 5px; white-space: nowrap; }
-        
-        #tutorial-screen { background: rgba(0,0,0,0.9); border: 2px solid gold; }
-        .key-hint { background: #333; color: gold; padding: 5px 10px; border-radius: 5px; border: 1px solid #777; font-family: monospace; }
-
+        .sign-tag { font-size: 0.85em; color: #fff; margin-top: 5px; }
+        #narrative-screen { background: #000; color: #eee; font-family: 'Special Elite', serif; display: none; }
+        .typewriter { overflow: hidden; white-space: pre-wrap; margin: 0 auto; letter-spacing: .10em; max-width: 750px; font-size: 1.2em; text-align: left; }
         .hud { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 1px solid gold; visibility: hidden; }
         .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
         .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
         .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
         button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; box-shadow: 0 4px 0 #b8860b; }
-        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8860b; }
+        button:hover { background: #fff; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <canvas id="gameCanvas" width="1000" height="500"></canvas>
-    
     <div id="intro-screen" class="screen">
-        <h1 style="font-size: 3em; margin: 0; text-shadow: 3px 3px #000; color: gold;">CIMA DE DUROS CAMPEONES</h1>
-        <p style="color: #fff; margin: 5px 0;">AGENCIA PRINCIPIUM.CIMA</p>
-        <div class="char-grid">
-            <div class="char-card"><img src="ezequiel.jpg"><div class="sign-tag">EZEQUIEL ♏</div></div>
-            <div class="char-card"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
-            <div class="char-card"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
-            <div class="char-card"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
-            <div class="char-card"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
-            <div class="char-card"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
-        </div>
-        <button onclick="showSelect()">ENTRAR AL BARRIO</button>
+        <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
+        <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
+        <button onclick="showSelect()">INICIAR PROGRAMA</button>
     </div>
-
     <div id="select-screen" class="screen" style="display:none;">
         <h2 style="font-size: 2em; margin-bottom: 10px;">ELIJE TU GUERRERO</h2>
-        <div class="char-grid">
-            <div class="char-card" onclick="showTutorial('EZEQUIEL', 'ezequiel.jpg', '♏', '#111', '#000', 'fade')"><img src="ezequiel.jpg"><div class="sign-tag">EZEQUIEL ♏</div></div>
-            <div class="char-card" onclick="showTutorial('NEA', 'nea.jpg', '♍', '#fff', '#4b2e1e', 'bowl')"><img src="nea.jpg"><div class="sign-tag">NEA ♍</div></div>
-            <div class="char-card" onclick="showTutorial('ANIBAL', 'anibal.jpg', '♍', '#f00', '#222', 'fade')"><img src="anibal.jpg"><div class="sign-tag">ANÍBAL ♍</div></div>
-            <div class="char-card" onclick="showTutorial('MARCOS', 'marcos.jpg', '♎', '#0f0', '#000', 'spiky')"><img src="marcos.jpg"><div class="sign-tag">MARCOS ♎</div></div>
-            <div class="char-card" onclick="showTutorial('SEBA', 'seba.jpg', '♍', '#00f', '#5e3a24', 'short')"><img src="seba.jpg"><div class="sign-tag">SEBA ♍</div></div>
-            <div class="char-card" onclick="showTutorial('LEON', 'leon.jpg', '♈', '#ffa500', '#8b4513', 'fade')"><img src="leon.jpg"><div class="sign-tag">LEÓN ♈</div></div>
-        </div>
+        <div class="char-grid" id="grid-container"></div>
     </div>
-
-    <div id="tutorial-screen" class="screen" style="display:none;">
-        <h2 style="font-size: 2.5em; color: gold;">¿ESTÁS LISTO?</h2>
-        <div style="font-size: 1.5em; line-height: 1.8; color: #fff; max-width: 600px;">
-            <p>MUEVETE CON LAS <span class="key-hint">FLECHAS</span> DEL TECLADO</p>
-            <p>PEGA UN PIÑAZO CON LA TECLA <span class="key-hint">Z</span></p>
-            <p style="font-size: 0.8em; color: gold; margin-top: 30px;">RECAUDA DINERO Y NO DEJES QUE TE BAJEN</p>
-        </div>
-        <button onclick="startGame()">¡A LA CALLE!</button>
+    <div id="narrative-screen" class="screen">
+        <div class="typewriter" id="narrative-text"></div>
+        <button id="btn-narrative" style="display:none;" onclick="startGame()">EMPEZAR EL DÍA</button>
     </div>
-
+    <div id="victory-screen" class="screen" style="display:none; background: rgba(0,0,0,0.95);">
+        <h2 id="victory-title" style="font-size: 3em; color: gold;">¡BARRIO DOMINADO!</h2>
+        <p style="font-size: 1.5em; color: #fff;">RECAUDACIÓN: <span id="final-score" style="color: gold;">$0</span></p>
+        <p id="victory-msg" style="max-width: 650px; color: #ccc; line-height: 1.6;"></p>
+        <button onclick="prepareLevel2()">IR AL CLUB DE PELEA</button>
+    </div>
     <div id="hud" class="hud">
         <img id="hud-face" class="hud-img" src="">
         <div>
@@ -82,7 +58,6 @@
 </div>
 
 <script>
-// (El resto del código JavaScript permanece igual para mantener la lógica del juego)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -91,78 +66,99 @@ const imgFa = new Image(); imgFa.src = 'fa.jpg';
 const imgRe = new Image(); imgRe.src = 're.jpg';
 const imgSol = new Image(); imgSol.src = 'sol.jpg';
 const flyers = [imgFa, imgDo, imgRe];
-
-const bgMusic = new Audio('tipo.mp3');
-bgMusic.loop = true;
-bgMusic.volume = 0.5;
+const bgMusic = new Audio('tipo.mp3'); bgMusic.loop = true;
 
 let active = false, score = 0, bgX = 0, frame = 0, keys = {};
-let timeCycle = 0, rainTimer = 0;
+let currentLevel = 1, isBossFight = false, rainTimer = 0, timeCycle = 0;
+let smokeArr = [];
 
+const characters = [
+    { name: 'NEA', img: 'nea.jpg', sign: '♍', color: '#fff', hColor: '#4b2e1e', hStyle: 'bowl' },
+    { name: 'ANÍBAL', img: 'anibal.jpg', sign: '♍', color: '#f00', hColor: '#222', hStyle: 'fade' },
+    { name: 'MARCOS', img: 'marcos.jpg', sign: '♎', color: '#0f0', hColor: '#000', hStyle: 'spiky' },
+    { name: 'SEBA', img: 'seba.jpg', sign: '♍', color: '#00f', hColor: '#5e3a24', hStyle: 'short' },
+    { name: 'LEÓN', img: 'leon.jpg', sign: '♈', color: '#ffa500', hColor: '#8b4513', hStyle: 'fade' },
+    { name: 'ULISES', img: 'Uli.jpg', sign: '♑', color: '#555', hColor: '#111', hStyle: 'fade' },
+    { name: 'EZEQUIEL', img: 'ezequiel.jpg', sign: '♏', color: '#4b0082', hColor: '#708090', hStyle: 'spiky' }
+];
+
+const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
+const enemy = { name: 'Enemigo', x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short', dir: -1 };
 const stars = Array.from({length: 40}, () => ({x: Math.random()*1000, y: Math.random()*200, sz: Math.random()*2}));
 const clouds = Array.from({length: 6}, () => ({x: Math.random()*1000, y: 40 + Math.random()*50, spd: 0.3 + Math.random()*0.4}));
 const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Math.random()*500, s: 15 + Math.random()*10}));
 
-const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
-const enemy = { x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short' };
-
-const items = [];
-function spawnWater() {
-    items.push({ x: bgX + 1100, y: 380 + Math.random()*80, active: true });
-}
-
 function showSelect() {
-    bgMusic.play().catch(e => console.log("Música en espera"));
+    const grid = document.getElementById('grid-container');
+    grid.innerHTML = "";
+    characters.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'char-card';
+        card.onclick = () => {
+            player.name = c.name; player.color = c.color; player.sign = c.sign;
+            player.hairColor = c.hColor; player.hairStyle = c.hStyle;
+            document.getElementById('hud-face').src = c.img;
+            document.getElementById('hud-name').innerText = c.name + " " + c.sign;
+            showNarrative();
+        };
+        card.innerHTML = `<img src="${c.img}"><div class="sign-tag">${c.name} ${c.sign}</div>`;
+        grid.appendChild(card);
+    });
     document.getElementById('intro-screen').style.display = 'none';
     document.getElementById('select-screen').style.display = 'flex';
 }
 
-function showTutorial(name, img, signo, color, hColor, hStyle) {
-    player.name = name; player.color = color; player.sign = signo;
-    player.hairColor = hColor; player.hairStyle = hStyle;
-    document.getElementById('hud-face').src = img;
-    document.getElementById('hud-name').innerText = name + " " + signo;
+function showNarrative() {
     document.getElementById('select-screen').style.display = 'none';
-    document.getElementById('tutorial-screen').style.display = 'flex';
+    document.getElementById('narrative-screen').style.display = 'flex';
+    const text = `El sol calienta el asfalto de Parque Chacabuco...\nNo hay nada en los bolsillos, pero sobra aguante.\nSalís a la calle a buscar lo que es tuyo,\nesquivando giles y recaudando para la Agencia.\nHoy el barrio se respeta.\n\n(Recauda más de $3000 para enfrentar al Jefe)`;
+    let i = 0;
+    const div = document.getElementById('narrative-text');
+    div.innerHTML = "";
+    function type() {
+        if (i < text.length) {
+            div.innerHTML += text.charAt(i); i++; setTimeout(type, 35);
+        } else { document.getElementById('btn-narrative').style.display = 'block'; }
+    }
+    type();
 }
 
 function startGame() {
-    document.getElementById('tutorial-screen').style.display = 'none';
+    document.getElementById('narrative-screen').style.display = 'none';
     document.getElementById('hud').style.visibility = 'visible';
+    bgMusic.play().catch(() => {});
     active = true; loop();
 }
 
 function drawSky() {
-    timeCycle += 0.002; 
-    let dayIntensity = (Math.sin(timeCycle) + 1) / 2; 
-    let r = Math.floor(10 + dayIntensity * 40);
-    let g = Math.floor(15 + dayIntensity * 100);
-    let b = Math.floor(30 + dayIntensity * 200);
-    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    timeCycle += 0.002;
+    let dayIntensity = (Math.sin(timeCycle) + 1) / 2;
+    if (currentLevel === 1) {
+        ctx.fillStyle = `rgb(${10 + dayIntensity*40},${15 + dayIntensity*100},${30 + dayIntensity*200})`;
+    } else { ctx.fillStyle = "#1a0505"; }
     ctx.fillRect(0,0,1000,350);
 
-    if(dayIntensity > 0.5) {
-        let sAlpha = (dayIntensity - 0.5) * 2;
-        ctx.fillStyle = `rgba(255, 255, 0, ${sAlpha})`;
-        ctx.beginPath(); ctx.arc(150, 80, 40, 0, Math.PI*2); ctx.fill();
-        clouds.forEach(c => {
-            c.x += c.spd; if(c.x > 1050) c.x = -100;
-            ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha * 0.6})`;
-            ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.arc(c.x+20, c.y-5, 18, 0, Math.PI*2); ctx.arc(c.x+40, c.y, 15, 0, Math.PI*2); ctx.fill();
-        });
+    if(currentLevel === 1) {
+        if(dayIntensity > 0.5) {
+            let sAlpha = (dayIntensity - 0.5) * 2;
+            ctx.fillStyle = `rgba(255, 255, 0, ${sAlpha})`;
+            ctx.beginPath(); ctx.arc(150, 80, 40, 0, Math.PI*2); ctx.fill();
+            clouds.forEach(c => {
+                c.x += c.spd; if(c.x > 1050) c.x = -100;
+                ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha * 0.6})`;
+                ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.arc(c.x+20, c.y-5, 18, 0, Math.PI*2); ctx.arc(c.x+40, c.y, 15, 0, Math.PI*2); ctx.fill();
+            });
+        }
+        if(dayIntensity < 0.5) {
+            let nAlpha = (0.5 - dayIntensity) * 2;
+            ctx.fillStyle = `rgba(255,255,255,${nAlpha})`;
+            stars.forEach(s => ctx.fillRect(s.x, s.y, s.sz, s.sz));
+            ctx.fillStyle = `rgba(255, 255, 240, ${nAlpha})`;
+            ctx.beginPath(); ctx.arc(850, 70, 25, 0, Math.PI*2); ctx.fill();
+        }
     }
-
-    if(dayIntensity < 0.5) {
-        let nAlpha = (0.5 - dayIntensity) * 2;
-        ctx.fillStyle = `rgba(255,255,255,${nAlpha})`;
-        stars.forEach(s => ctx.fillRect(s.x, s.y, s.sz, s.sz));
-        ctx.fillStyle = `rgba(255, 255, 240, ${nAlpha})`;
-        ctx.beginPath(); ctx.arc(850, 70, 25, 0, Math.PI*2); ctx.fill();
-    }
-
     if(rainTimer > 0) {
-        ctx.strokeStyle = "rgba(174, 194, 224, 0.6)";
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(174, 194, 224, 0.6)"; ctx.lineWidth = 1;
         rainDrops.forEach(d => {
             d.y += d.s; if(d.y > 500) { d.y = -20; d.x = Math.random()*1000; }
             ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x, d.y + d.s); ctx.stroke();
@@ -171,56 +167,73 @@ function drawSky() {
     }
 }
 
+function drawArtemis() {
+    if (currentLevel !== 1) return;
+    let fixedX = 800; 
+    let oscilacion = Math.sin(frame * 0.05) * 10; 
+    let ry = 80 + oscilacion; 
+    if(frame % 4 === 0) smokeArr.push({x: fixedX, y: ry + 10, r: 4, a: 0.6});
+    smokeArr.forEach((p, i) => {
+        p.x -= 3; p.a -= 0.01; p.r += 0.2;
+        ctx.fillStyle = `rgba(200, 200, 200, ${p.a})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+        if(p.a <= 0) smokeArr.splice(i, 1);
+    });
+    ctx.save();
+    ctx.fillStyle = "white"; 
+    ctx.fillRect(fixedX, ry, 60, 20);
+    ctx.fillStyle = "red"; 
+    ctx.beginPath(); 
+    ctx.moveTo(fixedX + 60, ry); 
+    ctx.lineTo(fixedX + 80, ry + 10); 
+    ctx.lineTo(fixedX + 60, ry + 20); 
+    ctx.fill();
+    ctx.fillStyle = "black"; 
+    ctx.font = "bold 10px Arial"; 
+    ctx.textAlign = "center";
+    ctx.fillText("ARTEMIS 2", fixedX + 30, ry + 14);
+    ctx.restore();
+}
+
 function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairStyle) {
     ctx.save();
     ctx.translate(x, y);
     const swing = Math.sin(frame * 0.15) * 10;
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#fff";
-    let flip = (isPlayer && dir === -1) ? -1 : 1;
-
+    let flip = (dir === -1) ? -1 : 1;
     ctx.beginPath();
-    let legLX1 = -10 * flip;
-    let legLX2 = (-15 * flip) - (isPlayer ? swing * flip : 0);
+    let legLX1 = -10 * flip; let legLX2 = (-15 * flip) - (swing * flip);
     ctx.moveTo(legLX1, -30); ctx.lineTo(legLX2, -5); 
-    let legRX1 = 10 * flip;
-    let legRX2 = (15 * flip) + (isPlayer ? swing * flip : 0);
+    let legRX1 = 10 * flip; let legRX2 = (15 * flip) + (swing * flip);
     ctx.moveTo(legRX1, -30); ctx.lineTo(legRX2, -5); 
     ctx.stroke();
-    
     ctx.fillStyle = "#fff";
-    let shoeLX = flip === 1 ? legLX2 : legLX2 - 12;
-    ctx.fillRect(shoeLX, -5, 12, 6);
-    let shoeRX = flip === 1 ? legRX2 : legRX2 - 12;
-    ctx.fillRect(shoeRX, -5, 12, 6);
-
+    ctx.fillRect(flip === 1 ? legLX2 : legLX2 - 12, -5, 12, 6);
+    ctx.fillRect(flip === 1 ? legRX2 : legRX2 - 12, -5, 12, 6);
     ctx.beginPath();
-    if(isPlayer && atk) {
-        ctx.moveTo(25 * flip, -75); ctx.lineTo(40 * flip, -115); 
+    if(atk) {
+        ctx.moveTo(25 * flip, -75); ctx.lineTo(40 * flip, -115);
         ctx.moveTo(-30 * flip, -75); ctx.lineTo(-45 * flip, -50 + swing);
     } else {
         ctx.moveTo(-30 * flip, -75); ctx.lineTo(-45 * flip, -50 + swing);
         ctx.moveTo(30 * flip, -75); ctx.lineTo(45 * flip, -50 - swing);
     }
     ctx.stroke();
-
     ctx.fillStyle = hit > 0 ? "white" : color;
     ctx.fillRect(-30, -110, 60, 80);
-    
     if(isPlayer) {
         ctx.fillStyle = (color === "#111" || color === "#000") ? "gold" : "black"; 
         ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
         ctx.fillText(player.name, 0, -85);
         ctx.font = "bold 16px Arial"; ctx.fillText(player.sign, 0, -65);
     } else {
-        ctx.fillStyle = "black"; ctx.font = "bold 30px Impact";
+        ctx.fillStyle = "black"; ctx.font = "bold 25px Impact";
         ctx.textAlign = "center"; ctx.fillText(type, 0, -55);
     }
-
     ctx.fillStyle = "#ffccaa";
     if(isPlayer) { ctx.fillRect(-20, -140, 40, 30); ctx.strokeRect(-20, -140, 40, 30); }
     else { ctx.beginPath(); ctx.arc(0, -125, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
-
     if(hairStyle !== 'none') {
         ctx.fillStyle = hairColor;
         if(hairStyle === 'fade') ctx.fillRect(-20, -150, 40, 15);
@@ -228,13 +241,15 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
         else if(hairStyle === 'spiky') { ctx.beginPath(); ctx.moveTo(-20, -140); ctx.lineTo(-10, -155); ctx.lineTo(0, -140); ctx.lineTo(10, -155); ctx.lineTo(20, -140); ctx.fill(); }
         else if(hairStyle === 'bowl') { ctx.fillRect(-22, -145, 44, 12); ctx.fillRect(-22, -145, 10, 20); ctx.fillRect(12, -145, 10, 20); }
     }
-
     ctx.fillStyle = "black";
-    let eyeX = (isPlayer && dir === 1) ? 5 : -15;
-    if(hit > 0) { ctx.font = "bold 15px Arial"; ctx.fillText("x x", 0, -125); }
-    else { ctx.fillRect(eyeX, -132, 4, 4); ctx.fillRect(eyeX + 10, -132, 4, 4); ctx.beginPath(); ctx.moveTo(eyeX - 2, -120); ctx.lineTo(eyeX + 12, -120); ctx.stroke(); }
-
-    if(isPlayer && atk) { ctx.fillStyle = "gold"; ctx.fillRect(35 * flip - (flip === -1 ? 18 : 0), -125, 18, 18); }
+    let eyeX = (dir === 1) ? 5 : -15;
+    if(hit > 0) { 
+        ctx.font = "bold 15px Arial"; ctx.fillText("x x", 0, -125);
+    } else { 
+        ctx.fillRect(eyeX, -132, 4, 4); ctx.fillRect(eyeX + 10, -132, 4, 4); 
+        ctx.beginPath(); ctx.moveTo(eyeX - 2, -120); ctx.lineTo(eyeX + 12, -120); ctx.stroke(); 
+    }
+    if(atk) { ctx.fillStyle = "gold"; ctx.fillRect(35 * flip - (flip === -1 ? 18 : 0), -125, 18, 18); }
     ctx.restore();
 }
 
@@ -242,97 +257,139 @@ function loop() {
     if(!active) return;
     frame++;
 
-    if(keys['ArrowRight']) { if(player.x < 500) player.x += player.spd; else bgX += player.spd; player.dir = 1; }
+    // MOVIMIENTO JUGADOR
+    if(keys['ArrowRight']) { 
+        // Si hay pelea de jefe en nivel 1, bloqueamos el avance del fondo
+        if(currentLevel === 1 && !isBossFight) {
+            if(player.x < 500) player.x += player.spd; else bgX += player.spd;
+        } else {
+            // En nivel 2 o pelea de jefe, el jugador se mueve libre por la pantalla hasta el borde
+            if(player.x < 950) player.x += player.spd; 
+        }
+        player.dir = 1; 
+    }
     if(keys['ArrowLeft']) { if(player.x > 50) player.x -= player.spd; player.dir = -1; }
     if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
     if(keys['ArrowDown'] && player.y < 480) player.y += 5;
 
-    if(player.hp <= 50 && items.length === 0) spawnWater();
+    // POSICIÓN DEL ENEMIGO RELATIVA AL FONDO O FIJA
+    // Si es pelea de jefe o nivel 2, el enemigo ya no se desplaza con bgX
+    let ex = (isBossFight || currentLevel === 2) ? enemy.x : enemy.x - bgX;
+    
+    // IA DE SEGUIMIENTO
+    if(isBossFight || currentLevel === 2) {
+        let diffX = ex - player.x;
+        if(Math.abs(diffX) > 40) { 
+            if(ex > player.x) { enemy.x -= enemy.spd; enemy.dir = -1; } 
+            else { enemy.x += enemy.spd; enemy.dir = 1; }
+        }
+        if(Math.abs(enemy.y - player.y) > 5) {
+            if(enemy.y > player.y) enemy.y -= 2; else enemy.y += 2;
+        }
+    } else { 
+        // Enemigos comunes del nivel 1
+        if(Math.abs(player.x - ex) < 65 && Math.abs(player.y - enemy.y) < 35) {
+            if(Math.random() < 0.05) player.hp -= 1;
+        } else { 
+            enemy.x -= enemy.spd; enemy.dir = -1;
+        }
+    }
 
-    let ex = enemy.x - bgX;
-    if(Math.abs(player.x - ex) < 60 && Math.abs(player.y - enemy.y) < 30) {
-        if(Math.random() < 0.05) player.hp -= 1;
-    } else { enemy.x -= enemy.spd; }
-
-    if(enemy.hp <= 0 || ex < -200) {
-        if(enemy.hp <= 0) score += 500;
-        enemy.hp = 50; enemy.x = bgX + 1100; enemy.y = 350 + Math.random()*120;
-        let r = Math.random();
-        if (r < 0.60) { enemy.type = '$'; enemy.color = 'gold'; enemy.hairStyle = 'short'; enemy.hairColor = '#4b2e1e'; }
-        else if (r < 0.90) { enemy.type = '₿'; enemy.color = '#f7931a'; enemy.hairStyle = 'fade'; enemy.hairColor = '#000'; }
-        else { enemy.type = '💧'; enemy.color = '#00ffff'; enemy.hairStyle = 'none'; }
+    // REGENERACIÓN O CAMBIO DE ENEMIGO
+    // Solo permitimos que el enemigo se "pierda" si NO es el jefe
+    if(enemy.hp <= 0 || (!isBossFight && currentLevel === 1 && ex < -200)) {
+        if(enemy.hp <= 0) {
+            score += isBossFight ? 3000 : 500;
+            if(isBossFight) { active = false; showVictory(); return; }
+            if(currentLevel === 2) { active = false; alert("¡CAMPEÓN ABSOLUTO DE CDDC!"); location.reload(); return; }
+        }
+        
+        if(currentLevel === 1) {
+            // Siguiente enemigo
+            if(score >= 3000) { 
+                isBossFight = true; 
+                enemy.hp = 400; 
+                enemy.type = "JEFE"; 
+                enemy.color = "#333";
+                // Posicionamos al jefe frente al jugador de forma absoluta
+                enemy.x = player.x + 400; 
+            } else {
+                enemy.x = bgX + 1100; enemy.hp = 50;
+                let r = Math.random();
+                if (r < 0.5) { enemy.type = '$'; enemy.color = 'gold'; }
+                else if (r < 0.8) { enemy.type = '₿'; enemy.color = '#f7931a'; }
+                else { enemy.type = '💧'; enemy.color = '#00ffff'; }
+            }
+        }
     }
 
     ctx.clearRect(0,0,1000,500);
     drawSky();
+    drawArtemis();
 
-    for(let i=0; i<12; i++) {
-        let x = (i * 400) - (bgX * 0.8 % 4800);
-        if (i % 4 === 3) { 
-            ctx.fillStyle = "#222"; ctx.fillRect(x, 50, 398, 300); 
-            ctx.fillStyle = "#444"; ctx.fillRect(x + 50, 150, 300, 200); 
-            ctx.strokeStyle = "#333"; ctx.lineWidth = 2;
-            for(let py=0; py<10; py++) { ctx.beginPath(); ctx.moveTo(x+50, 150+py*20); ctx.lineTo(x+350, 150+py*20); ctx.stroke(); }
-            if(imgSol.complete) ctx.drawImage(imgSol, x + 125, 180, 150, 140);
-            ctx.font = "20px 'Impact'"; ctx.textAlign = "center"; ctx.fillStyle = "gold";
-            ctx.fillText("CIMA DE DUROS CAMPEONES", x + 200, 130);
-        } else {
-            ctx.fillStyle = "#3d1a1a"; ctx.fillRect(x, 180, 395, 170);
-            ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1;
-            for(let ly=0; ly<8; ly++) { ctx.beginPath(); ctx.moveTo(x, 180+ly*21.5); ctx.lineTo(x+395, 180+ly*21.5); ctx.stroke(); }
-            ctx.font = "30px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,255,255,0.25)";
-            if(i%3==0) ctx.fillText("†", x + 50, 220);
-            if(i%3==1) ctx.fillText("ﷲ", x + 50, 220);
-            if(i%3==2) { ctx.fillText("†", x + 40, 220); ctx.fillText("ﷲ", x + 70, 220); }
-            ctx.font = "22px 'Permanent Marker'"; ctx.fillStyle = i%2==0 ? "#00ff00" : "#ff00ff";
-            if(i%3==0) ctx.fillText("Subte Medalla Milagrosa E", x + 200, 330);
-            if(i%3==1) ctx.fillText("Parque Chacabuco", x + 200, 330);
-            if(i%3==2) ctx.fillText("Lautaro abajo del puente", x + 200, 330);
-            if(flyers[i % 3].complete) ctx.drawImage(flyers[i % 3], x + 140, 200, 110, 100);
-            ctx.font = "14px 'Impact'"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(212, 175, 55, 0.5)";
-            ctx.fillText("Agencia Principium.cima", x + 200, 345);
+    // DIBUJO DEL ESCENARIO
+    if(currentLevel === 1) {
+        for(let i=0; i<12; i++) {
+            let x = (i * 400) - (bgX * 0.8 % 4800);
+            if (i % 4 === 3) {
+                ctx.fillStyle = "#222"; ctx.fillRect(x, 50, 398, 300);
+                ctx.fillStyle = "#444"; ctx.fillRect(x + 50, 150, 300, 200);
+                if(imgSol.complete) ctx.drawImage(imgSol, x + 125, 180, 150, 140);
+                ctx.fillStyle = "gold"; ctx.font = "20px Impact"; ctx.textAlign = "center";
+                ctx.fillText("CIMA DE DUROS CAMPEONES", x + 200, 130);
+            } else {
+                ctx.fillStyle = "#3d1a1a"; ctx.fillRect(x, 180, 395, 170);
+                ctx.font = "30px Arial"; ctx.fillStyle = "rgba(255,255,255,0.2)";
+                ctx.fillText(i%3==0?"†":i%3==1?"ﷲ":"† ﷲ", x + 50, 220);
+                if(flyers[i % 3].complete) ctx.drawImage(flyers[i % 3], x + 140, 200, 110, 100);
+                ctx.font = "18px 'Permanent Marker'"; ctx.fillStyle = "lime";
+                let loc = ["Subte Medalla Milagrosa E", "Parque Chacabuco", "Lautaro abajo del puente"];
+                ctx.fillText(loc[i%3], x + 200, 330);
+            }
         }
+        ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
+    } else {
+        ctx.fillStyle = "#331a00"; ctx.fillRect(0, 350, 1000, 150);
+        ctx.strokeStyle = "red"; ctx.lineWidth = 5; ctx.strokeRect(50, 350, 900, 140);
+        ctx.fillStyle = "rgba(255,0,0,0.1)"; ctx.fillRect(50, 350, 900, 140);
     }
-    
-    ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
 
-    items.forEach((it, index) => {
-        if(!it.active) return;
-        let ix = it.x - bgX;
-        ctx.fillStyle = "cyan"; ctx.fillRect(ix, it.y, 10, 20);
-        ctx.fillStyle = "white"; ctx.fillRect(ix, it.y, 10, 5);
-        if(Math.abs(player.x - ix) < 40 && Math.abs(player.y - it.y) < 40) {
-            player.hp = Math.min(100, player.hp + 30);
-            it.active = false;
-            items.splice(index, 1);
-        }
-    });
-
-    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, -1, enemy.hairColor, enemy.hairStyle);
+    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, enemy.hairStyle);
     drawHuman(player.x, player.y, player.color, true, 0, '', player.atk, player.dir, player.hairColor, player.hairStyle);
 
     document.getElementById('hp-fill').style.width = player.hp + "%";
     document.getElementById('score-text').innerText = "$" + score;
     if(player.hp <= 0) location.reload();
     if(enemy.hit > 0) enemy.hit--;
-
     requestAnimationFrame(loop);
 }
 
+function showVictory() {
+    document.getElementById('victory-screen').style.display = 'flex';
+    document.getElementById('final-score').innerText = score;
+    document.getElementById('victory-msg').innerText = "Limpiaste el barrio y la Agencia Principium está en boca de todos. Pero ahora viene lo serio. Los pesos pesados te esperan en el Club de Pelea.";
+}
+
+function prepareLevel2() {
+    document.getElementById('victory-screen').style.display = 'none';
+    currentLevel = 2; isBossFight = false;
+    const opList = characters.filter(c => c.name !== player.name);
+    const op = opList[Math.floor(Math.random() * opList.length)];
+    enemy.name = op.name; enemy.color = op.color; enemy.hairColor = op.hColor; enemy.hairStyle = op.hStyle;
+    enemy.hp = 250; enemy.type = op.sign; enemy.x = 800; enemy.y = 400; enemy.dir = -1;
+    player.x = 200; player.hp = 100;
+    active = true; loop();
+}
+
 window.onkeydown = (e) => {
-    if(document.getElementById('tutorial-screen').style.display === 'flex') {
-        startGame();
-        return;
-    }
     keys[e.key] = true;
     if(e.key.toLowerCase() === 'z' && !player.atk) {
         player.atk = true;
-        let ex = enemy.x - bgX;
+        let ex = (isBossFight || currentLevel === 2) ? enemy.x : enemy.x - bgX;
         if(Math.abs(player.x - ex) < 100 && Math.abs(player.y - enemy.y) < 55) { 
-            enemy.hp -= player.pwr; enemy.hit = 10; 
-            if(enemy.type === '💧') rainTimer = 220;
+            enemy.hp -= player.pwr; enemy.hit = 10; if(enemy.type === '💧') rainTimer = 150;
         }
-        setTimeout(() => player.atk = false, 180);
+        setTimeout(() => player.atk = false, 150);
     }
 };
 window.onkeyup = (e) => keys[e.key] = false;

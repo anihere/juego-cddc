@@ -31,7 +31,7 @@
     <div id="intro-screen" class="screen">
         <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
         <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
-        <button onclick="showSelect()">INICIAR PROGRAMA</button>
+        <button onclick="showSelect()">IR AL BARRIO</button>
     </div>
     <div id="select-screen" class="screen" style="display:none;">
         <h2 style="font-size: 2em; margin-bottom: 10px;">ELIJE TU GUERRERO</h2>
@@ -66,6 +66,9 @@ const imgFa = new Image(); imgFa.src = 'fa.jpg';
 const imgRe = new Image(); imgRe.src = 're.jpg';
 const imgSol = new Image(); imgSol.src = 'sol.jpg';
 const flyers = [imgFa, imgDo, imgRe];
+const backgroundsLvl2 = [imgDo, imgRe, imgSol]; 
+let currentBgLvl2Index = 0; 
+
 const bgMusic = new Audio('tipo.mp3'); bgMusic.loop = true;
 
 let active = false, score = 0, bgX = 0, frame = 0, keys = {};
@@ -83,7 +86,7 @@ const characters = [
 ];
 
 const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
-const enemy = { name: 'Enemigo', x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short', dir: -1 };
+const enemy = { name: 'Gato', x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short', dir: -1 };
 const stars = Array.from({length: 40}, () => ({x: Math.random()*1000, y: Math.random()*200, sz: Math.random()*2}));
 const clouds = Array.from({length: 6}, () => ({x: Math.random()*1000, y: 40 + Math.random()*50, spd: 0.3 + Math.random()*0.4}));
 const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Math.random()*500, s: 15 + Math.random()*10}));
@@ -135,10 +138,7 @@ function drawSky() {
     let dayIntensity = (Math.sin(timeCycle) + 1) / 2;
     if (currentLevel === 1) {
         ctx.fillStyle = `rgb(${10 + dayIntensity*40},${15 + dayIntensity*100},${30 + dayIntensity*200})`;
-    } else { ctx.fillStyle = "#1a0505"; }
-    ctx.fillRect(0,0,1000,350);
-
-    if(currentLevel === 1) {
+        ctx.fillRect(0,0,1000,350);
         if(dayIntensity > 0.5) {
             let sAlpha = (dayIntensity - 0.5) * 2;
             ctx.fillStyle = `rgba(255, 255, 0, ${sAlpha})`;
@@ -195,22 +195,28 @@ function drawArtemis() {
     ctx.restore();
 }
 
-function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairStyle) {
+function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairStyle, entityName) {
     ctx.save();
     ctx.translate(x, y);
     const swing = Math.sin(frame * 0.15) * 10;
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#fff";
     let flip = (dir === -1) ? -1 : 1;
+    
+    // Piernas
     ctx.beginPath();
     let legLX1 = -10 * flip; let legLX2 = (-15 * flip) - (swing * flip);
     ctx.moveTo(legLX1, -30); ctx.lineTo(legLX2, -5); 
     let legRX1 = 10 * flip; let legRX2 = (15 * flip) + (swing * flip);
     ctx.moveTo(legRX1, -30); ctx.lineTo(legRX2, -5); 
     ctx.stroke();
+    
+    // Pies
     ctx.fillStyle = "#fff";
     ctx.fillRect(flip === 1 ? legLX2 : legLX2 - 12, -5, 12, 6);
     ctx.fillRect(flip === 1 ? legRX2 : legRX2 - 12, -5, 12, 6);
+    
+    // Brazos
     ctx.beginPath();
     if(atk) {
         ctx.moveTo(25 * flip, -75); ctx.lineTo(40 * flip, -115);
@@ -220,20 +226,39 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
         ctx.moveTo(30 * flip, -75); ctx.lineTo(45 * flip, -50 - swing);
     }
     ctx.stroke();
+    
+    // Cuerpo
     ctx.fillStyle = hit > 0 ? "white" : color;
     ctx.fillRect(-30, -110, 60, 80);
+    
+    // --- LÓGICA DE TEXTOS CORREGIDA ---
+    ctx.textAlign = "center";
     if(isPlayer) {
-        ctx.fillStyle = (color === "#111" || color === "#000") ? "gold" : "black"; 
-        ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
+        ctx.fillStyle = (color === "#111" || color === "#000") ? "gold" : "black";
+        ctx.font = "bold 10px Arial";
         ctx.fillText(player.name, 0, -85);
-        ctx.font = "bold 16px Arial"; ctx.fillText(player.sign, 0, -65);
+        ctx.font = "bold 16px Arial"; 
+        ctx.fillText(player.sign, 0, -65);
     } else {
-        ctx.fillStyle = "black"; ctx.font = "bold 25px Impact";
-        ctx.textAlign = "center"; ctx.fillText(type, 0, -55);
+        // NIVEL 2: Nombre en la remera, nada arriba
+        if(currentLevel === 2) {
+            ctx.fillStyle = "white";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(entityName.toUpperCase(), 0, -75); // Nombre impreso en el pecho
+        } 
+        // Si no es Nivel 2, NO dibujamos nada arriba (borrada la línea de entityName en -165)
+        
+        ctx.fillStyle = "black";
+        ctx.font = "bold 25px Impact";
+        ctx.fillText(type, 0, -55);
     }
+    
+    // Cabeza
     ctx.fillStyle = "#ffccaa";
     if(isPlayer) { ctx.fillRect(-20, -140, 40, 30); ctx.strokeRect(-20, -140, 40, 30); }
     else { ctx.beginPath(); ctx.arc(0, -125, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
+    
+    // Cabello
     if(hairStyle !== 'none') {
         ctx.fillStyle = hairColor;
         if(hairStyle === 'fade') ctx.fillRect(-20, -150, 40, 15);
@@ -241,6 +266,8 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
         else if(hairStyle === 'spiky') { ctx.beginPath(); ctx.moveTo(-20, -140); ctx.lineTo(-10, -155); ctx.lineTo(0, -140); ctx.lineTo(10, -155); ctx.lineTo(20, -140); ctx.fill(); }
         else if(hairStyle === 'bowl') { ctx.fillRect(-22, -145, 44, 12); ctx.fillRect(-22, -145, 10, 20); ctx.fillRect(12, -145, 10, 20); }
     }
+    
+    // Ojos
     ctx.fillStyle = "black";
     let eyeX = (dir === 1) ? 5 : -15;
     if(hit > 0) { 
@@ -257,13 +284,10 @@ function loop() {
     if(!active) return;
     frame++;
 
-    // MOVIMIENTO JUGADOR
     if(keys['ArrowRight']) { 
-        // Si hay pelea de jefe en nivel 1, bloqueamos el avance del fondo
         if(currentLevel === 1 && !isBossFight) {
             if(player.x < 500) player.x += player.spd; else bgX += player.spd;
         } else {
-            // En nivel 2 o pelea de jefe, el jugador se mueve libre por la pantalla hasta el borde
             if(player.x < 950) player.x += player.spd; 
         }
         player.dir = 1; 
@@ -272,11 +296,9 @@ function loop() {
     if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
     if(keys['ArrowDown'] && player.y < 480) player.y += 5;
 
-    // POSICIÓN DEL ENEMIGO RELATIVA AL FONDO O FIJA
-    // Si es pelea de jefe o nivel 2, el enemigo ya no se desplaza con bgX
     let ex = (isBossFight || currentLevel === 2) ? enemy.x : enemy.x - bgX;
     
-    // IA DE SEGUIMIENTO
+    // IA Enemiga
     if(isBossFight || currentLevel === 2) {
         let diffX = ex - player.x;
         if(Math.abs(diffX) > 40) { 
@@ -287,7 +309,6 @@ function loop() {
             if(enemy.y > player.y) enemy.y -= 2; else enemy.y += 2;
         }
     } else { 
-        // Enemigos comunes del nivel 1
         if(Math.abs(player.x - ex) < 65 && Math.abs(player.y - enemy.y) < 35) {
             if(Math.random() < 0.05) player.hp -= 1;
         } else { 
@@ -295,24 +316,25 @@ function loop() {
         }
     }
 
-    // REGENERACIÓN O CAMBIO DE ENEMIGO
-    // Solo permitimos que el enemigo se "pierda" si NO es el jefe
+    // Victoria de ronda
     if(enemy.hp <= 0 || (!isBossFight && currentLevel === 1 && ex < -200)) {
         if(enemy.hp <= 0) {
             score += isBossFight ? 3000 : 500;
             if(isBossFight) { active = false; showVictory(); return; }
-            if(currentLevel === 2) { active = false; alert("¡CAMPEÓN ABSOLUTO DE CDDC!"); location.reload(); return; }
+            if(currentLevel === 2) { 
+                currentBgLvl2Index = (currentBgLvl2Index + 1) % backgroundsLvl2.length;
+                active = false; 
+                alert("¡PELEA GANADA! Preparando siguiente oponente..."); 
+                prepareLevel2(); 
+                return; 
+            }
         }
         
         if(currentLevel === 1) {
-            // Siguiente enemigo
             if(score >= 3000) { 
-                isBossFight = true; 
-                enemy.hp = 400; 
-                enemy.type = "JEFE"; 
-                enemy.color = "#333";
-                // Posicionamos al jefe frente al jugador de forma absoluta
-                enemy.x = player.x + 400; 
+                isBossFight = true; enemy.hp = 400; enemy.type = "JEFE"; 
+                enemy.name = "EL PATRÓN";
+                enemy.color = "#333"; enemy.x = player.x + 400; 
             } else {
                 enemy.x = bgX + 1100; enemy.hp = 50;
                 let r = Math.random();
@@ -324,11 +346,11 @@ function loop() {
     }
 
     ctx.clearRect(0,0,1000,500);
-    drawSky();
-    drawArtemis();
 
-    // DIBUJO DEL ESCENARIO
+    // Fondos
     if(currentLevel === 1) {
+        drawSky();
+        drawArtemis();
         for(let i=0; i<12; i++) {
             let x = (i * 400) - (bgX * 0.8 % 4800);
             if (i % 4 === 3) {
@@ -339,27 +361,28 @@ function loop() {
                 ctx.fillText("CIMA DE DUROS CAMPEONES", x + 200, 130);
             } else {
                 ctx.fillStyle = "#3d1a1a"; ctx.fillRect(x, 180, 395, 170);
-                ctx.font = "30px Arial"; ctx.fillStyle = "rgba(255,255,255,0.2)";
-                ctx.fillText(i%3==0?"†":i%3==1?"ﷲ":"† ﷲ", x + 50, 220);
                 if(flyers[i % 3].complete) ctx.drawImage(flyers[i % 3], x + 140, 200, 110, 100);
                 ctx.font = "18px 'Permanent Marker'"; ctx.fillStyle = "lime";
                 let loc = ["Subte Medalla Milagrosa E", "Parque Chacabuco", "Lautaro abajo del puente"];
                 ctx.fillText(loc[i%3], x + 200, 330);
             }
         }
-        ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
+        ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150); 
     } else {
-        ctx.fillStyle = "#331a00"; ctx.fillRect(0, 350, 1000, 150);
-        ctx.strokeStyle = "red"; ctx.lineWidth = 5; ctx.strokeRect(50, 350, 900, 140);
+        const currentBg = backgroundsLvl2[currentBgLvl2Index];
+        if(currentBg.complete) ctx.drawImage(currentBg, 0, 0, 1000, 350); 
+        else { ctx.fillStyle = "#1a0505"; ctx.fillRect(0,0,1000,350); }
+        ctx.fillStyle = "#331a00"; ctx.fillRect(0, 350, 1000, 150); 
+        ctx.strokeStyle = "red"; ctx.lineWidth = 5; ctx.strokeRect(50, 350, 900, 140); 
         ctx.fillStyle = "rgba(255,0,0,0.1)"; ctx.fillRect(50, 350, 900, 140);
     }
 
-    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, enemy.hairStyle);
+    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, enemy.hairStyle, enemy.name);
     drawHuman(player.x, player.y, player.color, true, 0, '', player.atk, player.dir, player.hairColor, player.hairStyle);
 
     document.getElementById('hp-fill').style.width = player.hp + "%";
     document.getElementById('score-text').innerText = "$" + score;
-    if(player.hp <= 0) location.reload();
+    if(player.hp <= 0) { alert("¡GAME OVER!"); location.reload(); }
     if(enemy.hit > 0) enemy.hit--;
     requestAnimationFrame(loop);
 }
@@ -373,11 +396,21 @@ function showVictory() {
 function prepareLevel2() {
     document.getElementById('victory-screen').style.display = 'none';
     currentLevel = 2; isBossFight = false;
+    
     const opList = characters.filter(c => c.name !== player.name);
     const op = opList[Math.floor(Math.random() * opList.length)];
-    enemy.name = op.name; enemy.color = op.color; enemy.hairColor = op.hColor; enemy.hairStyle = op.hStyle;
-    enemy.hp = 250; enemy.type = op.sign; enemy.x = 800; enemy.y = 400; enemy.dir = -1;
-    player.x = 200; player.hp = 100;
+    
+    enemy.name = op.name; 
+    enemy.color = op.color; 
+    enemy.hairColor = op.hColor; 
+    enemy.hairStyle = op.hStyle;
+    enemy.hp = 250; 
+    enemy.type = op.sign; 
+    enemy.x = 800; 
+    enemy.y = 400; 
+    enemy.dir = -1;
+    
+    player.x = 200; player.y = 400; player.hp = 100; 
     active = true; loop();
 }
 

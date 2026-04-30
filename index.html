@@ -78,7 +78,8 @@ const characters = [
     { name: 'MARCOS', img: 'marcos.jpg', sign: '♎', color: '#0f0', hColor: '#000', hStyle: 'spiky' },
     { name: 'SEBA', img: 'seba.jpg', sign: '♍', color: '#00f', hColor: '#5e3a24', hStyle: 'short' },
     { name: 'LEÓN', img: 'leon.jpg', sign: '♈', color: '#ffa500', hColor: '#8b4513', hStyle: 'fade' },
-    { name: 'ULISES', img: 'Uli.jpg', sign: '♑', color: '#555', hColor: '#111', hStyle: 'fade' }
+    { name: 'ULISES', img: 'Uli.jpg', sign: '♑', color: '#555', hColor: '#111', hStyle: 'fade' },
+    { name: 'EZEQUIEL', img: 'ezequiel.jpg', sign: '♏', color: '#4b0082', hColor: '#708090', hStyle: 'spiky' }
 ];
 
 const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
@@ -167,9 +168,7 @@ function drawSky() {
 }
 
 function drawArtemis() {
-    // MODIFICACIÓN: Solo se muestra en el Nivel 1
     if (currentLevel !== 1) return;
-
     let fixedX = 800; 
     let oscilacion = Math.sin(frame * 0.05) * 10; 
     let ry = 80 + oscilacion; 

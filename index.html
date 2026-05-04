@@ -22,31 +22,46 @@
         .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
         button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; box-shadow: 0 4px 0 #b8860b; }
         button:hover { background: #fff; }
+        
+        .cbu-box { margin-top: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+        .cbu-input { background: #111; border: 2px solid gold; color: lime; padding: 10px; font-family: 'Special Elite'; font-size: 1.2em; text-align: center; width: 300px; outline: none; }
+        .cbu-input::placeholder { color: #444; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <canvas id="gameCanvas" width="1000" height="500"></canvas>
+    
     <div id="intro-screen" class="screen">
         <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
         <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
         <button onclick="showSelect()">INICIAR PROGRAMA</button>
     </div>
+
     <div id="select-screen" class="screen" style="display:none;">
         <h2 style="font-size: 2em; margin-bottom: 10px;">ELIJE TU GUERRERO</h2>
         <div class="char-grid" id="grid-container"></div>
     </div>
+
     <div id="narrative-screen" class="screen">
         <div class="typewriter" id="narrative-text"></div>
         <button id="btn-narrative" style="display:none;" onclick="startGame()">EMPEZAR EL DÍA</button>
     </div>
+
     <div id="victory-screen" class="screen" style="display:none; background: rgba(0,0,0,0.95);">
         <h2 id="victory-title" style="font-size: 3em; color: gold;">¡BARRIO DOMINADO!</h2>
         <p style="font-size: 1.5em; color: #fff;">RECAUDACIÓN: <span id="final-score" style="color: gold;">$0</span></p>
         <p id="victory-msg" style="max-width: 650px; color: #ccc; line-height: 1.6;"></p>
-        <button onclick="prepareLevel2()">IR AL CLUB DE PELEA</button>
+        
+        <div id="cbu-container" class="cbu-box">
+            <label style="font-family: 'Special Elite'; color: gold;">INGRESE CBU PARA COBRO:</label>
+            <input type="text" id="cbu-field" class="cbu-input" placeholder="0000000000000000000000" maxlength="22">
+        </div>
+
+        <button id="btn-victory" onclick="nextStep()">AVANZAR</button>
     </div>
+
     <div id="hud" class="hud">
         <img id="hud-face" class="hud-img" src="">
         <div>
@@ -135,9 +150,12 @@ function drawSky() {
     let dayIntensity = (Math.sin(timeCycle) + 1) / 2;
     if (currentLevel === 1) {
         ctx.fillStyle = `rgb(${10 + dayIntensity*40},${15 + dayIntensity*100},${30 + dayIntensity*200})`;
-    } else { ctx.fillStyle = "#1a0505"; }
+    } else if (currentLevel === 2) {
+        ctx.fillStyle = "#1a0505";
+    } else {
+        ctx.fillStyle = "#050508"; 
+    }
     ctx.fillRect(0,0,1000,350);
-
     if(currentLevel === 1) {
         if(dayIntensity > 0.5) {
             let sAlpha = (dayIntensity - 0.5) * 2;
@@ -172,7 +190,6 @@ function drawArtemis() {
     let fixedX = 800; 
     let oscilacion = Math.sin(frame * 0.05) * 10; 
     let ry = 80 + oscilacion; 
-
     if(frame % 4 === 0) smokeArr.push({x: fixedX, y: ry + 10, r: 4, a: 0.6});
     smokeArr.forEach((p, i) => {
         p.x -= 3; p.a -= 0.01; p.r += 0.2;
@@ -180,36 +197,24 @@ function drawArtemis() {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
         if(p.a <= 0) smokeArr.splice(i, 1);
     });
-
     ctx.save();
-    ctx.fillStyle = "white"; 
-    ctx.fillRect(fixedX, ry, 60, 20);
-    ctx.fillStyle = "red"; 
-    ctx.beginPath(); 
-    ctx.moveTo(fixedX + 60, ry); 
-    ctx.lineTo(fixedX + 80, ry + 10); 
-    ctx.lineTo(fixedX + 60, ry + 20); 
-    ctx.fill();
-    ctx.fillStyle = "black"; 
-    ctx.font = "bold 10px Arial"; 
-    ctx.textAlign = "center";
+    ctx.fillStyle = "white"; ctx.fillRect(fixedX, ry, 60, 20);
+    ctx.fillStyle = "red"; ctx.beginPath(); ctx.moveTo(fixedX + 60, ry); ctx.lineTo(fixedX + 80, ry + 10); ctx.lineTo(fixedX + 60, ry + 20); ctx.fill();
+    ctx.fillStyle = "black"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
     ctx.fillText("ARTEMIS 2", fixedX + 30, ry + 14);
     ctx.restore();
 }
 
 function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairStyle) {
-    ctx.save();
-    ctx.translate(x, y);
+    ctx.save(); ctx.translate(x, y);
     const swing = Math.sin(frame * 0.15) * 10;
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4; ctx.strokeStyle = "#fff";
     let flip = (dir === -1) ? -1 : 1;
     ctx.beginPath();
     let legLX1 = -10 * flip; let legLX2 = (-15 * flip) - (swing * flip);
     ctx.moveTo(legLX1, -30); ctx.lineTo(legLX2, -5); 
     let legRX1 = 10 * flip; let legRX2 = (15 * flip) + (swing * flip);
-    ctx.moveTo(legRX1, -30); ctx.lineTo(legRX2, -5); 
-    ctx.stroke();
+    ctx.moveTo(legRX1, -30); ctx.lineTo(legRX2, -5); ctx.stroke();
     ctx.fillStyle = "#fff";
     ctx.fillRect(flip === 1 ? legLX2 : legLX2 - 12, -5, 12, 6);
     ctx.fillRect(flip === 1 ? legRX2 : legRX2 - 12, -5, 12, 6);
@@ -224,20 +229,15 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
     ctx.stroke();
     ctx.fillStyle = hit > 0 ? "white" : color;
     ctx.fillRect(-30, -110, 60, 80);
-
-    // Lógica de texto en la camiseta (NOMBRE Y SIGNO)
     if(isPlayer || (currentLevel === 2)) {
         ctx.fillStyle = (color === "#111" || color === "#000" || color === "#4b0082") ? "gold" : "black"; 
-        ctx.textAlign = "center"; 
-        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
         ctx.fillText(isPlayer ? player.name : enemy.name, 0, -85);
-        ctx.font = "bold 16px Arial"; 
-        ctx.fillText(isPlayer ? player.sign : type, 0, -65);
+        ctx.font = "bold 16px Arial"; ctx.fillText(isPlayer ? player.sign : type, 0, -65);
     } else {
         ctx.fillStyle = "black"; ctx.font = "bold 25px Impact";
         ctx.textAlign = "center"; ctx.fillText(type, 0, -55);
     }
-
     ctx.fillStyle = "#ffccaa";
     if(isPlayer) { ctx.fillRect(-20, -140, 40, 30); ctx.strokeRect(-20, -140, 40, 30); }
     else { ctx.beginPath(); ctx.arc(0, -125, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
@@ -250,12 +250,8 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
     }
     ctx.fillStyle = "black";
     let eyeX = (dir === 1) ? 5 : -15;
-    if(hit > 0) { 
-        ctx.font = "bold 15px Arial"; ctx.fillText("x x", 0, -125);
-    } else { 
-        ctx.fillRect(eyeX, -132, 4, 4); ctx.fillRect(eyeX + 10, -132, 4, 4); 
-        ctx.beginPath(); ctx.moveTo(eyeX - 2, -120); ctx.lineTo(eyeX + 12, -120); ctx.stroke(); 
-    }
+    if(hit > 0) { ctx.font = "bold 15px Arial"; ctx.fillText("x x", 0, -125); } 
+    else { ctx.fillRect(eyeX, -132, 4, 4); ctx.fillRect(eyeX + 10, -132, 4, 4); ctx.beginPath(); ctx.moveTo(eyeX - 2, -120); ctx.lineTo(eyeX + 12, -120); ctx.stroke(); }
     if(atk) { ctx.fillStyle = "gold"; ctx.fillRect(35 * flip - (flip === -1 ? 18 : 0), -125, 18, 18); }
     ctx.restore();
 }
@@ -264,7 +260,7 @@ function loop() {
     if(!active) return;
     frame++;
     if(keys['ArrowRight']) { 
-        if(currentLevel === 1) { if(player.x < 500) player.x += player.spd; else bgX += player.spd; }
+        if(currentLevel !== 2) { if(player.x < 500) player.x += player.spd; else bgX += player.spd; }
         else { if(player.x < 900) player.x += player.spd; }
         player.dir = 1; 
     }
@@ -272,32 +268,26 @@ function loop() {
     if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
     if(keys['ArrowDown'] && player.y < 480) player.y += 5;
 
-    let ex = enemy.x - (currentLevel === 1 ? bgX : 0);
-    
+    let ex = enemy.x - (currentLevel !== 2 ? bgX : 0);
     if(isBossFight || currentLevel === 2) {
         let diffX = ex - player.x;
         if(Math.abs(diffX) > 40) { 
             if(ex > player.x) { enemy.x -= enemy.spd; enemy.dir = -1; } 
             else { enemy.x += enemy.spd; enemy.dir = 1; }
         }
-        if(Math.abs(enemy.y - player.y) > 5) {
-            if(enemy.y > player.y) enemy.y -= 2; else enemy.y += 2;
-        }
+        if(Math.abs(enemy.y - player.y) > 5) { if(enemy.y > player.y) enemy.y -= 2; else enemy.y += 2; }
     } else { 
         if(Math.abs(player.x - ex) < 65 && Math.abs(player.y - enemy.y) < 35) {
             if(Math.random() < 0.05) player.hp -= 1;
-        } else { 
-            enemy.x -= enemy.spd; enemy.dir = -1;
-        }
+        } else { enemy.x -= enemy.spd; enemy.dir = -1; }
     }
 
-    if(enemy.hp <= 0 || (currentLevel === 1 && ex < -200)) {
+    if(enemy.hp <= 0 || (currentLevel !== 2 && ex < -200)) {
         if(enemy.hp <= 0) {
             score += isBossFight ? 3000 : 500;
-            if(isBossFight) { active = false; showVictory(); return; }
-            if(currentLevel === 2) { active = false; alert("¡CAMPEÓN ABSOLUTO DE CDDC!"); location.reload(); return; }
+            if(isBossFight || currentLevel === 2) { active = false; showVictory(); return; }
         }
-        if(currentLevel === 1) {
+        if(currentLevel !== 2) {
             enemy.x = bgX + 1100; enemy.hp = 50;
             if(score >= 3000) { isBossFight = true; enemy.hp = 400; enemy.type = "JEFE"; enemy.color = "#333"; enemy.name = "JEFE"; } 
             else {
@@ -329,19 +319,52 @@ function loop() {
                 if(flyers[i % 3].complete) ctx.drawImage(flyers[i % 3], x + 140, 200, 110, 100);
                 ctx.font = "18px 'Permanent Marker'"; ctx.fillStyle = "lime";
                 let loc = ["Subte Medalla Milagrosa E", "Parque Chacabuco", "Lautaro abajo del puente"];
-                ctx.fillText(loc[i%3], x + 200, 330);
+                ctx.textAlign = "center"; ctx.fillText(loc[i%3], x + 200, 330);
             }
         }
         ctx.fillStyle = "#111"; ctx.fillRect(0, 350, 1000, 150);
-    } else {
+    } else if (currentLevel === 2) {
         ctx.fillStyle = "#331a00"; ctx.fillRect(0, 350, 1000, 150);
         ctx.strokeStyle = "red"; ctx.lineWidth = 5; ctx.strokeRect(50, 350, 900, 140);
         ctx.fillStyle = "rgba(255,0,0,0.1)"; ctx.fillRect(50, 350, 900, 140);
-    }
+        
+        const pY = 80; const pW = 80; const pH = 90;
+        const positions = [250, 460, 670];
+        const imgs = [imgFa, imgDo, imgSol];
+        positions.forEach((px, idx) => {
+            ctx.fillStyle = "#553311"; ctx.fillRect(px - 5, pY - 5, pW + 10, pH + 20);
+            ctx.fillStyle = "#fdf5e6"; ctx.fillRect(px, pY, pW, pH);
+            if(imgs[idx].complete) ctx.drawImage(imgs[idx], px + 5, pY + 5, pW - 10, pH - 10);
+            ctx.strokeStyle = "gold"; ctx.lineWidth = 2; ctx.strokeRect(px - 5, pY - 5, pW + 10, pH + 20);
+        });
+        ctx.fillStyle = "gold"; ctx.font = "20px 'Permanent Marker'"; ctx.textAlign = "center";
+        ctx.fillText("DOJO Cima.PRINCIPIUM", 500, 60);
 
+    } else if (currentLevel === 3) {
+        for(let i=0; i<10; i++) {
+            let x = (i * 600) - (bgX * 0.9 % 6000);
+            if (i % 2 === 0) {
+                ctx.fillStyle = "#2a2a2a"; ctx.fillRect(x, 50, 500, 300);
+                ctx.fillStyle = "white"; ctx.font = "14px 'Special Elite'"; ctx.textAlign = "left";
+                ctx.fillText("ASESINARON A NICOLAS YANNI", x + 20, 100);
+                ctx.fillStyle = "red"; ctx.fillText("CULPABLE Psicologo PABLO LOPEZ: +54 9 114041-2050", x + 20, 130);
+                ctx.fillStyle = "gold"; ctx.fillText("OSDE CORRUPTO", x + 20, 160);
+                ctx.strokeStyle = "#444"; ctx.strokeRect(x+350, 80, 100, 200); 
+            } else {
+                ctx.fillStyle = "#111"; ctx.fillRect(x, 50, 500, 300);
+                ctx.fillStyle = "#ff00ff"; ctx.font = "40px 'Permanent Marker'"; ctx.textAlign = "center";
+                ctx.fillText("LA WARHOL", x + 250, 120);
+                ctx.strokeStyle = "cyan"; ctx.strokeRect(x+50, 50, 400, 300);
+                const bx = x + 230; const by = 150;
+                const flagCols = ["#E40303", "#FF8C00", "#FFED00", "#008026", "#004DFF", "#750787"];
+                flagCols.forEach((c, idx) => { ctx.fillStyle = c; ctx.fillRect(bx, by + (idx * 4), 30, 4); });
+                ctx.fillStyle = "#555"; ctx.fillRect(bx - 2, by, 2, 24);
+            }
+        }
+        ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 350, 1000, 150);
+    }
     drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, enemy.hairStyle);
     drawHuman(player.x, player.y, player.color, true, 0, '', player.atk, player.dir, player.hairColor, player.hairStyle);
-
     document.getElementById('hp-fill').style.width = player.hp + "%";
     document.getElementById('score-text').innerText = "$" + score;
     if(player.hp <= 0) location.reload();
@@ -350,9 +373,47 @@ function loop() {
 }
 
 function showVictory() {
-    document.getElementById('victory-screen').style.display = 'flex';
+    const screen = document.getElementById('victory-screen');
+    const title = document.getElementById('victory-title');
+    const msg = document.getElementById('victory-msg');
+    const btn = document.getElementById('btn-victory');
+    const cbuCont = document.getElementById('cbu-container');
+    
+    screen.style.display = 'flex';
     document.getElementById('final-score').innerText = score;
-    document.getElementById('victory-msg').innerText = "Limpiaste el barrio y la Agencia Principium está en boca de todos. Pero ahora viene lo serio. Los pesos pesados te esperan en el Club de Pelea.";
+    
+    if(currentLevel === 1) {
+        title.innerText = "¡BARRIO DOMINADO!";
+        msg.innerText = "Limpiaste el barrio. Los pesos pesados te esperan en el Club de Pelea.";
+        btn.innerText = "IR AL CLUB DE PELEA";
+        cbuCont.style.display = 'none';
+    } else if(currentLevel === 2) {
+        title.innerText = "¡CAMPEÓN DEL CLUB!";
+        msg.innerText = "Derrotaste al mejor. Pero hay deudas de sangre. Alguien te espera frente al psiquiátrico.";
+        btn.innerText = "IR AL HOSPITAL";
+        cbuCont.style.display = 'none';
+    } else {
+        title.innerText = "JUSTICIA ALCANZADA";
+        msg.innerText = "Has expuesto la verdad rellena el formulario de google para cobrar. La Agencia te compensará por el trabajo.";
+        btn.innerText = "ENVIAR Y FINALIZAR";
+        cbuCont.style.display = 'flex';
+    }
+}
+
+function nextStep() {
+    if(currentLevel === 1) prepareLevel2();
+    else if(currentLevel === 2) prepareLevel3();
+    else {
+        const cbuValue = document.getElementById('cbu-field').value;
+        if(cbuValue.length < 22) {
+            alert("El CBU debe tener 22 dígitos para procesar el pago.");
+        } else {
+            alert("CBU " + cbuValue + " recibido. Redirigiendo al formulario de registro...");
+            // Abrir el enlace de Google Forms proporcionado
+            window.open("https://docs.google.com/forms/d/e/1FAIpQLSfi4V06az0DjGQTyOzfNFNTCARQOTYo2qymWMFZN7V15rFd4A/viewform?usp=header", "_blank");
+            location.reload();
+        }
+    }
 }
 
 function prepareLevel2() {
@@ -362,15 +423,22 @@ function prepareLevel2() {
     const op = opList[Math.floor(Math.random() * opList.length)];
     enemy.name = op.name; enemy.color = op.color; enemy.hairColor = op.hColor; enemy.hairStyle = op.hStyle;
     enemy.hp = 250; enemy.type = op.sign; enemy.x = 800; enemy.y = 400; enemy.dir = -1;
-    player.x = 200; player.hp = 100;
-    active = true; loop();
+    player.x = 200; player.hp = 100; active = true; loop();
+}
+
+function prepareLevel3() {
+    document.getElementById('victory-screen').style.display = 'none';
+    currentLevel = 3; isBossFight = false; bgX = 0;
+    enemy.hp = 80; enemy.type = '$'; enemy.color = 'gold'; enemy.x = 1100;
+    player.x = 100; player.hp = 100; score = 0; active = true; loop();
 }
 
 window.onkeydown = (e) => {
+    if(document.activeElement.tagName === 'INPUT') return; 
     keys[e.key] = true;
     if(e.key.toLowerCase() === 'z' && !player.atk) {
         player.atk = true;
-        let ex = enemy.x - (currentLevel === 1 ? bgX : 0);
+        let ex = enemy.x - (currentLevel !== 2 ? bgX : 0);
         if(Math.abs(player.x - ex) < 100 && Math.abs(player.y - enemy.y) < 55) { 
             enemy.hp -= player.pwr; enemy.hit = 10; if(enemy.type === '💧') rainTimer = 150;
         }

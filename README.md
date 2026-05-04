@@ -44,3 +44,4 @@ Organizado por la **Agencia Principium.cima**.
 
 ---
 *Desarrollado con pasión por el combate y el diseño.*
+PD: UN saludo a MAxi Neiner el mejor profesor de programacion. un tipaso...

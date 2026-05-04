@@ -224,15 +224,20 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
     ctx.stroke();
     ctx.fillStyle = hit > 0 ? "white" : color;
     ctx.fillRect(-30, -110, 60, 80);
-    if(isPlayer) {
-        ctx.fillStyle = (color === "#111" || color === "#000") ? "gold" : "black"; 
-        ctx.textAlign = "center"; ctx.font = "bold 10px Arial";
-        ctx.fillText(player.name, 0, -85);
-        ctx.font = "bold 16px Arial"; ctx.fillText(player.sign, 0, -65);
+
+    // Lógica de texto en la camiseta (NOMBRE Y SIGNO)
+    if(isPlayer || (currentLevel === 2)) {
+        ctx.fillStyle = (color === "#111" || color === "#000" || color === "#4b0082") ? "gold" : "black"; 
+        ctx.textAlign = "center"; 
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(isPlayer ? player.name : enemy.name, 0, -85);
+        ctx.font = "bold 16px Arial"; 
+        ctx.fillText(isPlayer ? player.sign : type, 0, -65);
     } else {
         ctx.fillStyle = "black"; ctx.font = "bold 25px Impact";
         ctx.textAlign = "center"; ctx.fillText(type, 0, -55);
     }
+
     ctx.fillStyle = "#ffccaa";
     if(isPlayer) { ctx.fillRect(-20, -140, 40, 30); ctx.strokeRect(-20, -140, 40, 30); }
     else { ctx.beginPath(); ctx.arc(0, -125, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
@@ -294,7 +299,7 @@ function loop() {
         }
         if(currentLevel === 1) {
             enemy.x = bgX + 1100; enemy.hp = 50;
-            if(score >= 3000) { isBossFight = true; enemy.hp = 400; enemy.type = "JEFE"; enemy.color = "#333"; } 
+            if(score >= 3000) { isBossFight = true; enemy.hp = 400; enemy.type = "JEFE"; enemy.color = "#333"; enemy.name = "JEFE"; } 
             else {
                 let r = Math.random();
                 if (r < 0.6) { enemy.type = '$'; enemy.color = 'gold'; }

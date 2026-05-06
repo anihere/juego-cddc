@@ -5,9 +5,9 @@
     <title>CDDC: Agencia Principium.cima</title>
     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Impact', sans-serif; }
+        body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Impact', sans-serif; touch-action: none; }
         #game-container { position: relative; width: 1000px; height: 500px; border: 4px solid gold; background: #000; overflow: hidden; }
-        canvas { display: block; image-rendering: pixelated; }
+        canvas { display: block; image-rendering: pixelated; width: 100%; height: 100%; }
         .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; padding: 20px; }
         .char-grid { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
         .char-card { border: 2px solid #444; padding: 6px; cursor: pointer; background: #000; width: 110px; border-radius: 8px; transition: 0.2s; }
@@ -26,6 +26,30 @@
         .cbu-box { margin-top: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; }
         .cbu-input { background: #111; border: 2px solid gold; color: lime; padding: 10px; font-family: 'Special Elite'; font-size: 1.2em; text-align: center; width: 300px; outline: none; }
         .cbu-input::placeholder { color: #444; }
+
+        /* CONTROLES MOBILE */
+        #mobile-ui {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 160px;
+            display: none; pointer-events: none; z-index: 150;
+        }
+        #joystick-base {
+            position: absolute; bottom: 30px; left: 30px; width: 100px; height: 100px;
+            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%; pointer-events: auto;
+        }
+        #joystick-stick {
+            position: absolute; top: 25px; left: 25px; width: 50px; height: 50px;
+            background: rgba(255, 215, 0, 0.4); border: 2px solid gold;
+            border-radius: 50%;
+        }
+        .m-atk-btn {
+            position: absolute; bottom: 45px; right: 40px; width: 70px; height: 70px;
+            background: rgba(255, 0, 0, 0.2); border: 2px solid red;
+            border-radius: 50%; color: white; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: bold;
+            pointer-events: auto; touch-action: none;
+        }
+        @media (max-width: 1024px) { #mobile-ui { display: block; } }
     </style>
 </head>
 <body>
@@ -36,7 +60,7 @@
     <div id="intro-screen" class="screen">
         <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
         <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
-        <button onclick="showSelect()">Iran al barrio</button>
+        <button onclick="showSelect()">IRAN AL BARRIO</button>
     </div>
 
     <div id="select-screen" class="screen" style="display:none;">
@@ -70,6 +94,12 @@
             <div style="color:#fff; font-size: 0.8em;">RECAUDADO: <span id="score-text" style="color:gold">$0</span></div>
         </div>
     </div>
+
+    <!-- UI MOBILE ADICIONAL -->
+    <div id="mobile-ui">
+        <div id="joystick-base"><div id="joystick-stick"></div></div>
+        <div class="m-atk-btn" id="mAtk">GOLPE</div>
+    </div>
 </div>
 
 <script>
@@ -86,6 +116,8 @@ const bgMusic = new Audio('tipo.mp3'); bgMusic.loop = true;
 let active = false, score = 0, bgX = 0, frame = 0, keys = {};
 let currentLevel = 1, isBossFight = false, rainTimer = 0, timeCycle = 0;
 let smokeArr = [];
+// Variables Joystick
+let joyX = 0, joyY = 0;
 
 const characters = [
     { name: 'NEA', img: 'nea.jpg', sign: '♍', color: '#fff', hColor: '#4b2e1e', hStyle: 'bowl' },
@@ -259,14 +291,15 @@ function drawHuman(x, y, color, isPlayer, hit, type, atk, dir, hairColor, hairSt
 function loop() {
     if(!active) return;
     frame++;
-    if(keys['ArrowRight']) { 
+    // MOVIMIENTO INTEGRADO (Teclado + Joystick)
+    if(keys['ArrowRight'] || joyX > 0.3) { 
         if(currentLevel !== 2) { if(player.x < 500) player.x += player.spd; else bgX += player.spd; }
         else { if(player.x < 900) player.x += player.spd; }
         player.dir = 1; 
     }
-    if(keys['ArrowLeft']) { if(player.x > 50) player.x -= player.spd; player.dir = -1; }
-    if(keys['ArrowUp'] && player.y > 350) player.y -= 5;
-    if(keys['ArrowDown'] && player.y < 480) player.y += 5;
+    if(keys['ArrowLeft'] || joyX < -0.3) { if(player.x > 50) player.x -= player.spd; player.dir = -1; }
+    if((keys['ArrowUp'] || joyY < -0.3) && player.y > 350) player.y -= 5;
+    if((keys['ArrowDown'] || joyY > 0.3) && player.y < 480) player.y += 5;
 
     let ex = enemy.x - (currentLevel !== 2 ? bgX : 0);
     if(isBossFight || currentLevel === 2) {
@@ -340,7 +373,7 @@ function loop() {
         ctx.fillStyle = "gold"; ctx.font = "20px 'Permanent Marker'"; ctx.textAlign = "center";
         ctx.fillText("DOJO Cima.PRINCIPIUM", 500, 60);
 
-    } else if (currentLevel === 3) {
+       } else if (currentLevel === 3) {
         for(let i=0; i<15; i++) {
             let x = (i * 600) - (bgX * 0.9 % 9000);
             let selector = i % 3; // Esto alterna entre los 3 edificios sin romper el loop
@@ -380,7 +413,8 @@ function loop() {
         ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 350, 1000, 150);
     
     }
-    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, enemy.hairStyle);
+
+    drawHuman(ex, enemy.y, enemy.color, false, enemy.hit, enemy.type, false, enemy.dir, enemy.hairColor, hairStyle = enemy.hairStyle);
     drawHuman(player.x, player.y, player.color, true, 0, '', player.atk, player.dir, player.hairColor, player.hairStyle);
     document.getElementById('hp-fill').style.width = player.hp + "%";
     document.getElementById('score-text').innerText = "$" + score;
@@ -426,7 +460,6 @@ function nextStep() {
             alert("El CBU debe tener 22 dígitos para procesar el pago.");
         } else {
             alert("CBU " + cbuValue + " recibido. Redirigiendo al formulario de registro...");
-            // Abrir el enlace de Google Forms proporcionado
             window.open("https://docs.google.com/forms/d/e/1FAIpQLSfi4V06az0DjGQTyOzfNFNTCARQOTYo2qymWMFZN7V15rFd4A/viewform?usp=header", "_blank");
             location.reload();
         }
@@ -450,17 +483,42 @@ function prepareLevel3() {
     player.x = 100; player.hp = 100; score = 0; active = true; loop();
 }
 
+function executeAttack() {
+    if(!active || player.atk) return;
+    player.atk = true;
+    let ex = enemy.x - (currentLevel !== 2 ? bgX : 0);
+    if(Math.abs(player.x - ex) < 100 && Math.abs(player.y - enemy.y) < 55) { 
+        enemy.hp -= player.pwr; enemy.hit = 10; if(enemy.type === '💧') rainTimer = 150;
+    }
+    setTimeout(() => player.atk = false, 150);
+}
+
+// LOGICA JOYSTICK
+const stick = document.getElementById('joystick-stick');
+const base = document.getElementById('joystick-base');
+const handleJoy = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = base.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    let dx = touch.clientX - centerX;
+    let dy = touch.clientY - centerY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const maxDist = 40;
+    if (dist > maxDist) { dx *= maxDist / dist; dy *= maxDist / dist; }
+    stick.style.transform = `translate(${dx}px, ${dy}px)`;
+    joyX = dx / maxDist; joyY = dy / maxDist;
+};
+base.addEventListener('touchstart', handleJoy);
+base.addEventListener('touchmove', handleJoy);
+base.addEventListener('touchend', () => { stick.style.transform = `translate(0px, 0px)`; joyX = 0; joyY = 0; });
+document.getElementById('mAtk').addEventListener('touchstart', (e) => { e.preventDefault(); executeAttack(); });
+
 window.onkeydown = (e) => {
     if(document.activeElement.tagName === 'INPUT') return; 
     keys[e.key] = true;
-    if(e.key.toLowerCase() === 'z' && !player.atk) {
-        player.atk = true;
-        let ex = enemy.x - (currentLevel !== 2 ? bgX : 0);
-        if(Math.abs(player.x - ex) < 100 && Math.abs(player.y - enemy.y) < 55) { 
-            enemy.hp -= player.pwr; enemy.hit = 10; if(enemy.type === '💧') rainTimer = 150;
-        }
-        setTimeout(() => player.atk = false, 150);
-    }
+    if(e.key.toLowerCase() === 'z') executeAttack();
 };
 window.onkeyup = (e) => keys[e.key] = false;
 </script>

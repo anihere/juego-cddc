@@ -243,6 +243,271 @@ function drawSky() {
 function drawArtemis() {
     if (currentLevel !== 1) return;
     let fixedX = 800; 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CDDC: Agencia Principium.cima</title>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Impact', sans-serif; touch-action: none; }
+        #game-container { position: relative; width: 1000px; height: 500px; border: 4px solid gold; background: #000; overflow: hidden; }
+        canvas { display: block; image-rendering: pixelated; width: 100%; height: 100%; }
+        .screen { position: absolute; inset: 0; background: radial-gradient(circle, #222, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; padding: 20px; }
+        .char-grid { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+        .char-card { border: 2px solid #444; padding: 6px; cursor: pointer; background: #000; width: 110px; border-radius: 8px; transition: 0.2s; }
+        .char-card:hover { border-color: gold; transform: scale(1.05); }
+        .char-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 4px; border: 1px solid #333; }
+        .sign-tag { font-size: 0.85em; color: #fff; margin-top: 5px; }
+        #narrative-screen { background: #000; color: #eee; font-family: 'Special Elite', serif; display: none; }
+        .typewriter { overflow: hidden; white-space: pre-wrap; margin: 0 auto; letter-spacing: .10em; max-width: 750px; font-size: 1.2em; text-align: left; }
+        .hud { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 1px solid gold; visibility: hidden; }
+        .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
+        .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
+        .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
+        /* WIDGET CLIMA INTEGRADO */
+        #weather-report { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid #00ffff; border-radius: 5px; color: #00ffff; font-family: 'Special Elite'; font-size: 10px; z-index: 200; pointer-events: none; visibility: hidden;}
+                
+        button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; box-shadow: 0 4px 0 #b8860b; }
+        button:hover { background: #fff; }
+        .cbu-box { margin-top: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+        .cbu-input { background: #111; border: 2px solid gold; color: lime; padding: 10px; font-family: 'Special Elite'; font-size: 1.2em; text-align: center; width: 300px; outline: none; }
+        .cbu-input::placeholder { color: #444; }
+
+        /* CONTROLES MOBILE */
+        #mobile-ui {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 160px;
+            display: none; pointer-events: none; z-index: 150;
+        }
+        #joystick-base {
+            position: absolute; bottom: 30px; left: 30px; width: 100px; height: 100px;
+            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%; pointer-events: auto;
+        }
+        #joystick-stick {
+            position: absolute; top: 25px; left: 25px; width: 50px; height: 50px;
+            background: rgba(255, 215, 0, 0.4); border: 2px solid gold;
+            border-radius: 50%;
+        }
+        .m-atk-btn {
+            position: absolute; bottom: 45px; right: 40px; width: 70px; height: 70px;
+            background: rgba(255, 0, 0, 0.2); border: 2px solid red;
+            border-radius: 50%; color: white; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: bold;
+            pointer-events: auto; touch-action: none;
+        }
+        @media (max-width: 1024px) { #mobile-ui { display: block; } }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="1000" height="500"></canvas>
+    <div id="weather-report">
+        <div style="color:gold; font-size: 8px; border-bottom: 1px solid #333;">PRONÓSTICO AGENCIA CIMA-PRINCIPIUM</div>
+        <div id="weather-data">CARGANDO...</div>
+    </div>
+}
+    <div id="intro-screen" class="screen">
+        <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
+        <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
+        <button onclick="showSelect()">IRAN AL BARRIO</button>
+    </div>
+
+    <div id="select-screen" class="screen" style="display:none;">
+        <h2 style="font-size: 2em; margin-bottom: 10px;">ELIJE TU GUERRERO</h2>
+        <div class="char-grid" id="grid-container"></div>
+    </div>
+
+    <div id="narrative-screen" class="screen">
+        <div class="typewriter" id="narrative-text"></div>
+        <button id="btn-narrative" style="display:none;" onclick="startGame()">EMPEZAR EL DÍA</button>
+    </div>
+
+    <div id="victory-screen" class="screen" style="display:none; background: rgba(0,0,0,0.95);">
+        <h2 id="victory-title" style="font-size: 3em; color: gold;">¡BARRIO DOMINADO!</h2>
+        <p style="font-size: 1.5em; color: #fff;">RECAUDACIÓN: <span id="final-score" style="color: gold;">$0</span></p>
+        <p id="victory-msg" style="max-width: 650px; color: #ccc; line-height: 1.6;"></p>
+        
+        <div id="cbu-container" class="cbu-box">
+            <label style="font-family: 'Special Elite'; color: gold;">INGRESE CBU PARA COBRO:</label>
+            <input type="text" id="cbu-field" class="cbu-input" placeholder="0000000000000000000000" maxlength="22">
+        </div>
+
+        <button id="btn-victory" onclick="nextStep()">AVANZAR</button>
+    </div>
+
+    <div id="hud" class="hud">
+        <img id="hud-face" class="hud-img" src="">
+        <div>
+            <div id="hud-name" style="color: gold; font-size: 1.1em;">-</div>
+            <div class="hp-bar-bg"><div id="hp-fill" class="hp-bar-fill"></div></div>
+            <div style="color:#fff; font-size: 0.8em;">RECAUDADO: <span id="score-text" style="color:gold">$0</span></div>
+        </div>
+    </div>
+
+    <!-- UI MOBILE ADICIONAL -->
+    <div id="mobile-ui">
+        <div id="joystick-base"><div id="joystick-stick"></div></div>
+        <div class="m-atk-btn" id="mAtk">GOLPE</div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const imgDo = new Image(); imgDo.src = 'do.jpg';
+const imgFa = new Image(); imgFa.src = 'fa.jpg';
+const imgRe = new Image(); imgRe.src = 're.jpg';
+const imgSol = new Image(); imgSol.src = 'sol.jpg';
+const flyers = [imgFa, imgDo, imgRe];
+const bgMusic = new Audio('tipo.mp3'); bgMusic.loop = true;
+
+let active = false, score = 0, bgX = 0, frame = 0, keys = {};
+let currentLevel = 1, isBossFight = false, rainTimer = 0, timeCycle = 0;
+let smokeArr = [];
+// Variables Joystick
+let joyX = 0, joyY = 0;
+
+const characters = [
+    { name: 'NEA', img: 'nea.jpg', sign: '♍', color: '#fff', hColor: '#4b2e1e', hStyle: 'bowl' },
+    { name: 'ANÍBAL', img: 'anibal.jpg', sign: '♍', color: '#f00', hColor: '#222', hStyle: 'fade' },
+    { name: 'MARCOS', img: 'marcos.jpg', sign: '♎', color: '#0f0', hColor: '#000', hStyle: 'spiky' },
+    { name: 'SEBA', img: 'seba.jpg', sign: '♍', color: '#00f', hColor: '#5e3a24', hStyle: 'short' },
+    { name: 'LEÓN', img: 'leon.jpg', sign: '♈', color: '#ffa500', hColor: '#8b4513', hStyle: 'fade' },
+    { name: 'ULISES', img: 'uli.jpg', sign: '♑', color: '#555', hColor: '#111', hStyle: 'fade' },
+    { name: 'EZEQUIEL', img: 'ezequiel.jpg', sign: '♏', color: '#4b0082', hColor: '#708090', hStyle: 'spiky' }
+];
+
+const player = { name: '', x: 100, y: 400, hp: 100, spd: 7, pwr: 15, atk: false, dir: 1, color: '#fff', sign: '', hairColor: '#222', hairStyle: 'fade' };
+const enemy = { name: 'Enemigo', x: 1100, y: 400, hp: 50, spd: 3, type: '$', color: 'gold', hit: 0, hairColor: '#4b2e1e', hairStyle: 'short', dir: -1 };
+const stars = Array.from({length: 40}, () => ({x: Math.random()*1000, y: Math.random()*200, sz: Math.random()*2}));
+const clouds = Array.from({length: 6}, () => ({x: Math.random()*1000, y: 40 + Math.random()*50, spd: 0.3 + Math.random()*0.4}));
+const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Math.random()*500, s: 15 + Math.random()*10}));
+
+// --- LÓGICA DE CLIMA (FUERA DEL LOOP PARA EVITAR CUELGUES) ---
+async function updateWeather() {
+    const display = document.getElementById('weather-data');
+    try {
+        // Pedimos Clima Actual + Pronóstico de 2 días
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.60&longitude=-58.38&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=2`);
+        const data = await res.json();
+        
+        const interpretCode = (code) => {
+            if (code >= 61 && code <= 67) return "🌧️";
+            if (code >= 80 && code <= 82) return "🌧️";
+            if (code >= 95) return "⛈️";
+            if (code >= 1 && code <= 3) return "☁️";
+            if (code == 0) return "☀️";
+            return "☁️";
+        };
+
+        // Lógica para HOY: Usamos el código de AHORA MISMO para el ícono
+        const estadoActualIcono = interpretCode(data.current_weather.weathercode);
+        const hoyMax = Math.round(data.daily.temperature_2m_max[0]);
+        const hoyMin = Math.round(data.daily.temperature_2m_min[0]);
+        
+        // Lógica para MAÑANA: Pronóstico general
+        const manEstado = interpretCode(data.daily.weathercode[1]);
+        const manMax = Math.round(data.daily.temperature_2m_max[1]);
+        const manMin = Math.round(data.daily.temperature_2m_min[1]);
+
+        display.innerHTML = `HOY: ${hoyMax}°/${hoyMin}° ${estadoActualIcono}<br>MAÑ: ${manMax}°/${manMin}° ${manEstado}`;
+        
+    } catch (e) {
+        display.innerHTML = `HOY: 21°/12° ☀️<br>MAÑ: 18°/11° ☁️`;
+    }
+}
+updateWeather();
+
+function showSelect() {
+    const grid = document.getElementById('grid-container');
+    grid.innerHTML = "";
+    characters.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'char-card';
+        card.onclick = () => {
+            player.name = c.name; player.color = c.color; player.sign = c.sign;
+            player.hairColor = c.hColor; player.hairStyle = c.hStyle;
+            document.getElementById('hud-face').src = c.img;
+            document.getElementById('hud-name').innerText = c.name + " " + c.sign;
+            showNarrative();
+        };
+        card.innerHTML = `<img src="${c.img}"><div class="sign-tag">${c.name} ${c.sign}</div>`;
+        grid.appendChild(card);
+    });
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('select-screen').style.display = 'flex';
+}
+
+function showNarrative() {
+    document.getElementById('select-screen').style.display = 'none';
+    document.getElementById('narrative-screen').style.display = 'flex';
+    const text = `El sol calienta el asfalto de Parque Chacabuco...\nNo hay nada en los bolsillos, pero sobra aguante.\nSalís a la calle a buscar lo que es tuyo,\nesquivando giles y recaudando para la Agencia.\nHoy el barrio se respeta.\n\n(Recauda más de $3000 para enfrentar al Jefe)`;
+    let i = 0;
+    const div = document.getElementById('narrative-text');
+    div.innerHTML = "";
+    function type() {
+        if (i < text.length) {
+            div.innerHTML += text.charAt(i); i++; setTimeout(type, 35);
+        } else { document.getElementById('btn-narrative').style.display = 'block'; }
+    }
+    type();
+}
+
+function startGame() {
+    document.getElementById('narrative-screen').style.display = 'none';
+    document.getElementById('hud').style.visibility = 'visible';
+    document.getElementById('weather-report').style.visibility = 'visible';     
+    bgMusic.play().catch(() => {});
+    active = true; loop();
+   
+}
+
+function drawSky() {
+    timeCycle += 0.002;
+    let dayIntensity = (Math.sin(timeCycle) + 1) / 2;
+    if (currentLevel === 1) {
+        ctx.fillStyle = `rgb(${10 + dayIntensity*40},${15 + dayIntensity*100},${30 + dayIntensity*200})`;
+    } else if (currentLevel === 2) {
+        ctx.fillStyle = "#1a0505";
+    } else {
+        ctx.fillStyle = "#050508"; 
+    }
+    ctx.fillRect(0,0,1000,350);
+    if(currentLevel === 1) {
+        if(dayIntensity > 0.5) {
+            let sAlpha = (dayIntensity - 0.5) * 2;
+            ctx.fillStyle = `rgba(255, 255, 0, ${sAlpha})`;
+            ctx.beginPath(); ctx.arc(150, 80, 40, 0, Math.PI*2); ctx.fill();
+            clouds.forEach(c => {
+                c.x += c.spd; if(c.x > 1050) c.x = -100;
+                ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha * 0.6})`;
+                ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.arc(c.x+20, c.y-5, 18, 0, Math.PI*2); ctx.arc(c.x+40, c.y, 15, 0, Math.PI*2); ctx.fill();
+            });
+        }
+        if(dayIntensity < 0.5) {
+            let nAlpha = (0.5 - dayIntensity) * 2;
+            ctx.fillStyle = `rgba(255,255,255,${nAlpha})`;
+            stars.forEach(s => ctx.fillRect(s.x, s.y, s.sz, s.sz));
+            ctx.fillStyle = `rgba(255, 255, 240, ${nAlpha})`;
+            ctx.beginPath(); ctx.arc(850, 70, 25, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    if(rainTimer > 0) {
+        ctx.strokeStyle = "rgba(174, 194, 224, 0.6)"; ctx.lineWidth = 1;
+        rainDrops.forEach(d => {
+            d.y += d.s; if(d.y > 500) { d.y = -20; d.x = Math.random()*1000; }
+            ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x, d.y + d.s); ctx.stroke();
+        });
+        rainTimer--;
+    }
+}
+
+function drawArtemis() {
+    if (currentLevel !== 1) return;
+    let fixedX = 800; 
     let oscilacion = Math.sin(frame * 0.05) * 10; 
     let ry = 80 + oscilacion; 
     if(frame % 4 === 0) smokeArr.push({x: fixedX, y: ry + 10, r: 4, a: 0.6});

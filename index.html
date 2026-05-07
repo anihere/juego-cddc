@@ -20,9 +20,11 @@
         .hud-img { width: 50px; height: 50px; border: 1px solid gold; object-fit: cover; }
         .hp-bar-bg { width: 180px; height: 12px; background: #400; border: 1px solid #fff; }
         .hp-bar-fill { height: 100%; background: #0f0; width: 100%; transition: width 0.3s; }
+        /* WIDGET CLIMA INTEGRADO */
+        #weather-report { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid #00ffff; border-radius: 5px; color: #00ffff; font-family: 'Special Elite'; font-size: 10px; z-index: 200; pointer-events: none; visibility: hidden;}
+                
         button { background: gold; color: #000; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.2em; text-transform: uppercase; box-shadow: 0 4px 0 #b8860b; }
         button:hover { background: #fff; }
-        
         .cbu-box { margin-top: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; }
         .cbu-input { background: #111; border: 2px solid gold; color: lime; padding: 10px; font-family: 'Special Elite'; font-size: 1.2em; text-align: center; width: 300px; outline: none; }
         .cbu-input::placeholder { color: #444; }
@@ -56,7 +58,11 @@
 
 <div id="game-container">
     <canvas id="gameCanvas" width="1000" height="500"></canvas>
-    
+    <div id="weather-report">
+        <div style="color:gold; font-size: 8px; border-bottom: 1px solid #333;">PRONÓSTICO AGENCIA CIMA-PRINCIPIUM</div>
+        <div id="weather-data">CARGANDO...</div>
+    </div>
+}
     <div id="intro-screen" class="screen">
         <h1 style="font-size: 3.5em; margin: 0; color: gold; text-shadow: 4px 4px #000;">CIMA DE DUROS CAMPEONES</h1>
         <p style="color: #fff; letter-spacing: 2px;">AGENCIA PRINCIPIUM.CIMA</p>
@@ -135,6 +141,21 @@ const stars = Array.from({length: 40}, () => ({x: Math.random()*1000, y: Math.ra
 const clouds = Array.from({length: 6}, () => ({x: Math.random()*1000, y: 40 + Math.random()*50, spd: 0.3 + Math.random()*0.4}));
 const rainDrops = Array.from({length: 100}, () => ({x: Math.random()*1000, y: Math.random()*500, s: 15 + Math.random()*10}));
 
+// --- LÓGICA DE CLIMA (FUERA DEL LOOP PARA EVITAR CUELGUES) ---
+async function updateWeather() {
+    const display = document.getElementById('weather-data');
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.60&longitude=-58.38&daily=temperature_2m_max,temperature_2m_min&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=2`);
+        const data = await res.json();
+        const hoy = `${Math.round(data.daily.temperature_2m_max[0])}°/${Math.round(data.daily.temperature_2m_min[0])}°`;
+        const man = `${Math.round(data.daily.temperature_2m_max[1])}°/${Math.round(data.daily.temperature_2m_min[1])}°`;
+        display.innerHTML = `HOY: ${hoy}<br>MAÑ: ${man}`;
+    } catch (e) {
+        display.innerHTML = `HOY: 19°/12°<br>MAÑ: 17°/11°`;
+    }
+}
+updateWeather();
+
 function showSelect() {
     const grid = document.getElementById('grid-container');
     grid.innerHTML = "";
@@ -173,8 +194,10 @@ function showNarrative() {
 function startGame() {
     document.getElementById('narrative-screen').style.display = 'none';
     document.getElementById('hud').style.visibility = 'visible';
+    document.getElementById('weather-report').style.visibility = 'visible';     
     bgMusic.play().catch(() => {});
     active = true; loop();
+   
 }
 
 function drawSky() {
